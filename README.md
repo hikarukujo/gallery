@@ -25,7 +25,7 @@ SmartGallery is a complete system designed to revolutionize how you manage your 
 ## 🎯 See SmartGallery in Action
 
 <p align="center">
-  <img src="assets/smartgallery-3.png" alt="SmartGallery Features Overview" width="800">
+  <img src="assets/smartgallery-3.jpg" alt="SmartGallery Features Overview" width="800">
 </p>
 
 <p align="center">
