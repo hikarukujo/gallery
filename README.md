@@ -52,14 +52,20 @@ SmartGallery works its magic through two key components:
 
 Setting up SmartGallery is a two-step process: installing the custom node in ComfyUI and running the gallery application.
 
-#### Step 1: Install the Custom Node in ComfyUI
+#### Step 1: Install the Background Logger in ComfyUI
+
+**Note:** This is not a traditional custom node that appears in the UI. Instead, `auto_log_workflows.py` is a **background execution hook** that runs silently behind the scenes to capture workflows automatically.
 
 1. From this repository, locate the `custom_nodes/auto_log_workflows.py` file in the project structure.
-2. Copy this file to your ComfyUI `custom_nodes` directory:
+2. Copy this single file directly to your ComfyUI `custom_nodes` directory:
    ```
    Your_ComfyUI_Folder/custom_nodes/auto_log_workflows.py
    ```
-3. Restart ComfyUI. The logger will now be active and will automatically save workflows to `Your_ComfyUI_Folder/input/workflow_logs_success/`.
+   **Important:** Unlike typical custom nodes that require their own folders, this file should be placed directly in the `custom_nodes` directory as a standalone Python file.
+
+3. Restart ComfyUI. The background logger will now be active and will automatically save workflows to `Your_ComfyUI_Folder/input/workflow_logs_success/` for every job execution.
+
+> **💡 Technical Note:** This approach uses ComfyUI's execution hook system to intercept and log workflow data transparently. You won't see this as a node in your workflow - it works completely in the background, capturing the workflow JSON for every execution regardless of which save nodes you use.
 
 > **⭐ Important Note on Existing Files:** The workflow logging will only apply to images and videos generated **after** you have installed the `auto_log_workflows.py` node.
 >
