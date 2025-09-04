@@ -34,7 +34,7 @@ SmartGallery is a complete system designed to revolutionize how you manage your 
 
 ### The SmartGallery Advantage
 
-* **Universal Workflow Capture:** The `auto_log_workflows.py` custom node silently saves the workflow for every single job you run in ComfyUI, breaking the PNG-only limitation.
+* **Universal Workflow Capture:** While ComfyUI's default save nodes only embed workflows in PNG files, and advanced custom save nodes require manual integration into each workflow, the `auto_log_workflows.py` custom node works seamlessly in the background. It automatically saves the complete workflow for every single job you run in ComfyUI, regardless of output format or which save nodes you use.
 * **Standalone Operation:** SmartGallery runs on its own port, meaning **you can manage your entire gallery even when ComfyUI is not running**. Organize your creations, move files between folders, delete unwanted outputs, and download workflows anytime.
 * **Blazing-Fast Interface:** Using an SQLite database and thumbnail caching, the gallery loads instantly, even with thousands of files.
 * **Full Organizational Control:** Create, rename, and delete folders, mark your favorite images, and use powerful search and filters to find exactly what you need.
@@ -54,11 +54,12 @@ Setting up SmartGallery is a two-step process: installing the custom node in Com
 
 #### Step 1: Install the Custom Node in ComfyUI
 
-1. Place the `auto_log_workflows.py` file inside your ComfyUI `custom_nodes` directory:
+1. From this repository, locate the `custom_nodes/auto_log_workflows.py` file in the project structure.
+2. Copy this file to your ComfyUI `custom_nodes` directory:
    ```
    Your_ComfyUI_Folder/custom_nodes/auto_log_workflows.py
    ```
-2. Restart ComfyUI. The logger will now be active and will automatically save workflows to `Your_ComfyUI_Folder/input/workflow_logs_success/`.
+3. Restart ComfyUI. The logger will now be active and will automatically save workflows to `Your_ComfyUI_Folder/input/workflow_logs_success/`.
 
 > **⭐ Important Note on Existing Files:** The workflow logging will only apply to images and videos generated **after** you have installed the `auto_log_workflows.py` node.
 >
@@ -74,9 +75,11 @@ smart-comfyui-gallery/
 ├── smartgallery.py
 ├── requirements.txt
 ├── README.md
+├── custom_nodes/
+│   └── auto_log_workflows.py
 ├── assets/
 │   ├── smartgallery.png
-│   └── smartgallery-3.png
+│   └── smartgallery-3.jpg
 ├── templates/
 │   └── index.html
 └── static/
