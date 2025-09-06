@@ -14,6 +14,13 @@
 </p>
 
 <p align="center">
+  <img src="assets/node_summary.png" alt="Node Summary" width="500">
+</p>
+<p align="center">
+  <em>🔍 Instant workflow insights - Node Summary</em>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License"></a>
   <img src="https://img.shields.io/badge/Python-3.9+-blue.svg" alt="Python Version">
   <a href="https://github.com/biagiomaf/smart-comfyui-gallery/stargazers"><img src="https://img.shields.io/github/stars/biagiomaf/smart-comfyui-gallery?style=social" alt="GitHub stars"></a>
@@ -47,12 +54,10 @@ SmartGallery isn't just another image viewer. It's a **time machine for your cre
 - ⚡ **2-File Installation**: Just two files to transform your entire workflow
 
 <div align="center">
-  <img src="assets/gallery_from_mobile_screen.png" alt="Mobile View" width="300" style="display: inline-block; margin: 10px;">
-  <img src="assets/node_summary.png" alt="Node Summary" width="300" style="display: inline-block; margin: 10px;">
+  <img src="assets/gallery_from_mobile_screen.png" alt="Mobile View" width="300"">
 </div>
-
 <p align="center">
-  <em>📱 Perfect mobile experience | 🔍 Instant workflow insights</em>
+  <em>📱 Perfect mobile experience</em>
 </p>
 
 ---
