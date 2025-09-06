@@ -3,1007 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartGallery: {{ current_folder_name }}</title>
+    <title>SmartGallery: {{ current_folder_info.display_name }}</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='galleryout/favicon.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.css" rel="stylesheet">
     <style>
-        :root { 
-            --bg-color: #0a0a0a; 
-            --surface-color: #1a1a1a; 
-            --surface-hover: #252525;
-            --primary-color: #007bff; 
-            --primary-hover: #0056b3;
-            --text-color: #f8f9fa; 
-            --text-muted: #adb5bd;
-            --border-color: #343a40; 
-            --danger-color: #dc3545;
-            --danger-hover: #c82333;
-            --favorite-color: #ffc107; 
-            --workflow-color: #28a745;
-            --success-color: #20c997;
-            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        :root {
+            --bg-color: #0a0a0a; --surface-color: #1a1a1a; --surface-hover: #252525;
+            --primary-color: #007bff; --primary-hover: #0056b3; --text-color: #f8f9fa;
+            --text-muted: #adb5bd; --border-color: #343a40; --danger-color: #dc3545;
+            --danger-hover: #c82333; --favorite-color: #ffc107; --workflow-color: #28a745;
+            --success-color: #20c997; --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.2);
+            --glass-bg: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.1);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1); --shadow-md: 0 4px 12px rgba(0,0,0,0.2);
             --shadow-lg: 0 8px 24px rgba(0,0,0,0.3);
         }
-
         * { box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif; 
-            margin: 0; 
-            background: var(--bg-color);
-            color: var(--text-color); 
-            padding-bottom: 80px;
-            line-height: 1.6;
-        }
-        body.lightbox-open {
-            overflow: hidden;
-        }
-
-        /* HEADER STYLING */
-        .header { 
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--glass-border); 
-            padding: 1.5rem 2rem;
-        }
-        .header-top { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            margin-bottom: 1.5rem; 
-            flex-wrap: wrap; 
-            gap: 1.5rem; 
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .navigation { 
-            display: flex; 
-            align-items: center; 
-            gap: 1rem; 
-            flex-wrap: wrap; 
-        }
-        .navigation nav { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 0.75rem; 
-        }
-        .folder-link { 
-            color: var(--text-color); 
-            text-decoration: none; 
-            border-radius: 12px; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            display: flex; 
-            align-items: center; 
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
-        .folder-link:hover { 
-            background: var(--surface-hover);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        .folder-link.active { 
-            background: var(--gradient-primary);
-            color: white; 
-            font-weight: 600;
-            box-shadow: var(--shadow-lg);
-        }
-        .folder-link a { 
-            color: inherit; 
-            text-decoration: none; 
-            padding: 0.75rem 1rem; 
-            font-weight: 500;
-        }
-        .folder-actions { 
-            display: flex; 
-            align-items: center; 
-            padding: 0 12px 0 4px; 
-        }
-        .folder-action-btn { 
-            background: none; 
-            border: none; 
-            color: var(--text-color); 
-            cursor: pointer; 
-            padding: 6px; 
-            border-radius: 6px; 
-            font-size: 1rem; 
-            line-height: 1; 
-            opacity: 0.7;
-            transition: all 0.2s;
-        }
-        .folder-action-btn:hover { 
-            opacity: 1; 
-            background-color: rgba(255,255,255,0.15);
-            transform: scale(1.1);
-        }
-        #create-folder-btn { 
-            background: var(--gradient-secondary);
-            color: white; 
-            border: none; 
-            padding: 0.75rem 1.5rem; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-size: 0.9rem; 
-            font-weight: 600;
-            transition: all 0.3s;
-            box-shadow: var(--shadow-sm);
-        }
-        #create-folder-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        /* FILTER BAR STYLING */
-        .filter-bar { 
-            background: var(--surface-color);
-            padding: 1.5rem 2rem; 
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-        }
-        .filter-bar form { 
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            align-items: end;
-        }
-        .filter-group { 
-            display: flex; 
-            flex-direction: column; 
-        }
-        .filter-bar label { 
-            font-weight: 600; 
-            margin-bottom: 0.5rem; 
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .filter-bar select, 
-        .filter-bar input[type="text"],
-        .filter-bar button, 
-        .filter-bar a { 
-            background: var(--glass-bg);
-            color: var(--text-color); 
-            border: 1px solid var(--glass-border); 
-            border-radius: 8px; 
-            padding: 0.75rem 1rem; 
-            font-size: 0.9rem;
-            transition: all 0.3s;
-            backdrop-filter: blur(10px);
-        }
-        .filter-bar input[type="text"] {
-            font-family: inherit;
-        }
-        .filter-bar input[type="text"]:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-        }
-        .filter-bar button { 
-            background: var(--primary-color);
-            cursor: pointer;
-            font-weight: 600;
-            color: white;
-            border: 1px solid var(--primary-color);
-        }
-        .filter-bar button:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-        .filter-bar button.refresh-btn { 
-            background: var(--workflow-color);
-            border-color: var(--workflow-color);
-        }
-        .filter-bar a { 
-            text-decoration: none; 
-            text-align: center;
-            color: var(--text-muted);
-        }
-        .filter-bar a:hover {
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif; margin: 0; background: var(--bg-color); color: var(--text-color); line-height: 1.6; display: flex; min-height: 100vh; }
+        body.lightbox-open, body.modal-open { overflow: hidden; }
+        .sidebar { width: 320px; background: var(--surface-color); border-right: 1px solid var(--border-color); padding: 1.5rem; display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
+        .main-content { flex-grow: 1; padding-bottom: 80px; }
+        .sidebar-header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-header h1 { margin: 0; font-size: 1.8rem; font-weight: 700; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        #sidebar-toggle-btn { display: none; background: var(--surface-hover); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+        .folder-tree, .folder-tree ul { list-style: none; padding: 0; margin: 0; }
+        .folder-tree { flex-grow: 1; }
+        .folder-tree li { padding-left: 20px; position: relative; }
+        .folder-tree > li:first-child { padding-left: 0; }
+        .folder-item { display: flex; align-items: center; padding: 8px; border-radius: 8px; transition: background-color 0.2s; position: relative; }
+        .folder-item:hover { background-color: var(--surface-hover); }
+        .folder-item.active { background-color: var(--primary-color); color: white; font-weight: 600; }
+        .toggle-btn { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; user-select: none; }
+        .toggle-btn.empty { visibility: hidden; }
+        .folder-link { flex-grow: 1; text-decoration: none; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 25px; cursor: pointer; }
+        .folder-link.navigation-link { cursor: pointer; }
+        .folder-actions { margin-left: auto; display: flex; }
+        .folder-action-btn { background: none; border: none; color: inherit; cursor: pointer; padding: 4px; border-radius: 4px; font-size: 0.9rem; opacity: 0.7; transition: all 0.2s; }
+        .folder-action-btn:hover { opacity: 1; background-color: rgba(255,255,255,0.15); }
+        .folder-tree li.collapsed > ul { display: none; }
+        .folder-tree li:not(.collapsed) > .folder-item > .toggle-btn::before { content: '▾'; }
+        .folder-tree li.collapsed > .folder-item > .toggle-btn::before { content: '▸'; }
+        .folder-tree li.no-children > .folder-item > .toggle-btn { visibility: hidden; }
+        .folder-link.navigation-link { cursor: pointer; transition: color 0.2s; }
+        .folder-link.navigation-link:not(.no-children):hover { color: var(--primary-color) !important; text-decoration: underline; }
+        #create-folder-btn { width: 100%; background: var(--gradient-secondary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 12px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s; box-shadow: var(--shadow-sm); margin-top: 1.5rem; }
+        #create-folder-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .breadcrumbs { display: flex; align-items: center; gap: 0.5rem; padding: 1.5rem 2rem; background: var(--surface-color); border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
+        .breadcrumbs a, .breadcrumbs span { color: var(--text-muted); text-decoration: none; font-weight: 500; }
+        .breadcrumbs a:hover { color: var(--text-color); }
+        .breadcrumbs span:last-child { color: var(--text-color); font-weight: 700; }
+        .filter-bar { padding: 1.5rem 2rem; }
+        .filter-bar form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; align-items: end; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-bar label { font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-bar select, .filter-bar input[type="text"], .filter-bar button, .filter-bar a { background: var(--glass-bg); color: var(--text-color); border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.9rem; transition: all 0.3s; backdrop-filter: blur(10px); }
+        .filter-bar input[type="text"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1); }
+        .filter-bar button { background: var(--primary-color); cursor: pointer; font-weight: 600; color: white; border: 1px solid var(--primary-color); }
+        .filter-bar button:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .filter-bar button.refresh-btn { background: var(--workflow-color); border-color: var(--workflow-color); }
+        .filter-bar a { text-decoration: none; text-align: center; color: var(--text-muted); }
+        .filter-bar a:hover { background: var(--surface-hover); color: var(--text-color); }
+        .filter-group-inline { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+        .filter-group-inline input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary-color); }
+        .filter-actions { display: flex; gap: 0.75rem; justify-content: flex-start; flex-wrap: wrap; }
+        .filter-actions .sort-btn {
             background: var(--surface-hover);
             color: var(--text-color);
-        }
-        .filter-group-inline { 
-            display: flex; 
-            align-items: center; 
-            gap: 0.75rem; 
-            margin-bottom: 0.5rem; 
-        }
-        .filter-group-inline input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--primary-color);
-        }
-        .filter-actions {
-            display: flex;
-            gap: 0.75rem;
-            justify-content: flex-start;
-        }
-        
-        /* TOM SELECT STYLING */
-        .ts-control { 
-            background: var(--glass-bg) !important; 
-            border: 1px solid var(--glass-border) !important; 
-            border-radius: 8px !important;
-            backdrop-filter: blur(10px) !important;
-        }
-        .ts-control:focus-within {
-            border-color: var(--primary-color) !important;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1) !important;
-        }
-        .ts-dropdown, .ts-control, .ts-control input { 
-            color: var(--text-color) !important; 
-        }
-        .ts-dropdown { 
-            background: var(--surface-color) !important; 
-            border: 1px solid var(--border-color) !important; 
-            z-index: 1000;
-            border-radius: 8px !important;
-            box-shadow: var(--shadow-lg) !important;
-        }
-        .ts-dropdown .option { 
-            padding: 12px 16px;
-            transition: all 0.2s;
-        }
-        .ts-dropdown .active { 
-            background: var(--primary-color) !important; 
-            color: white !important; 
-        }
-        .ts-control > .item { 
-            background: var(--primary-color) !important;
-            border-radius: 6px !important;
-            color: white !important;
-        }
-
-        /* GALLERY STYLING */
-        .gallery-container { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
-            gap: 2rem; 
-            padding: 2rem; 
-            min-height: 50vh;
-        }
-        .gallery-item { 
-            background: var(--glass-bg);
-            border-radius: 16px; 
-            overflow: hidden; 
-            box-shadow: var(--shadow-sm);
-            display: flex; 
-            flex-direction: column; 
-            position: relative; 
-            border: 2px solid transparent; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-        }
-        .gallery-item:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-        .gallery-item.selected { 
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
-        }
-        .gallery-item .thumbnail-link {
-             cursor: pointer;
-        }
-        
-        .selection-checkmark { 
-            position: absolute; 
-            bottom: 12px; 
-            right: 12px; 
-            width: 24px; 
-            height: 24px; 
-            background: rgba(0,0,0,0.6);
-            border: 2px solid var(--text-color); 
-            border-radius: 50%; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 11; 
-            transition: all 0.3s; 
-            color: transparent; 
-            cursor: pointer; 
-            font-size: 12px;
-            backdrop-filter: blur(10px);
-        }
-        .gallery-item.selected .selection-checkmark { 
-            background: var(--primary-color);
-            border-color: var(--primary-color); 
-            color: white;
-            transform: scale(1.1);
-        }
-        
-        .gallery-item.dragging { 
-            opacity: 0.6; 
-            cursor: grabbing;
-            transform: rotate(2deg);
-        }
-        .thumbnail-wrapper { 
-            position: relative; 
-            width: 100%; 
-            background: var(--surface-color);
-            overflow: hidden;
-        }
-        .thumbnail-wrapper img, 
-        .thumbnail-wrapper video { 
-            display: block; 
-            width: 100%; 
-            height: auto;
-            transition: transform 0.3s;
-        }
-        .gallery-item:hover .thumbnail-wrapper img,
-        .gallery-item:hover .thumbnail-wrapper video {
-            transform: scale(1.05);
-        }
-        .item-info { 
-            padding: 1.5rem; 
-            flex-grow: 1; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            padding-bottom: 48px; 
-        }
-        .item-info p { 
-            margin: 0 0 1.5rem 0; 
-            word-wrap: break-word; 
-            font-size: 0.95rem;
-            font-weight: 500;
-            line-height: 1.4;
-        }
-        .file-dimensions { 
-            font-size: 0.8em; 
-            color: var(--text-muted);
-            font-weight: 400;
-        }
-        .item-actions { 
-            display: flex; 
-            gap: 0.75rem; 
-            margin-top: auto; 
-            flex-wrap: wrap; 
-        }
-        .item-actions a, 
-        .item-actions button { 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            text-decoration: none; 
-            background: var(--glass-bg);
-            color: var(--text-color); 
-            padding: 0.6rem 1rem; 
-            border-radius: 8px; 
-            font-size: 0.8rem; 
-            border: 1px solid var(--glass-border); 
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-            backdrop-filter: blur(10px);
-        }
-        .item-actions a:hover,
-        .item-actions button:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-        .item-actions .delete-btn { 
-            background: var(--danger-color);
-            border-color: var(--danger-color);
-            color: white;
-        }
-        .item-actions .delete-btn:hover {
-            background: var(--danger-hover);
-        }
-        .favorite-btn { 
-            font-size: 1.2rem; 
-            padding: 0.6rem; 
-            line-height: 1; 
-        }
-        .favorite-btn.favorited {
-            background: var(--favorite-color);
-            color: #000;
-            border-color: var(--favorite-color);
-        }
-        .duration-overlay, 
-        .workflow-badge { 
-            z-index: 10; 
-            position: absolute; 
-        }
-        .duration-overlay { 
-            bottom: 8px; 
-            right: 8px; 
-            background: rgba(0,0,0,0.8);
-            color: white; 
-            padding: 4px 8px; 
-            border-radius: 6px; 
-            font-size: 0.75rem;
-            font-weight: 500;
-            backdrop-filter: blur(10px);
-        }
-        .workflow-badge { 
-            top: 8px; 
-            left: 8px; 
-            background: var(--workflow-color);
-            color: white; 
-            padding: 4px 10px; 
-            border-radius: 6px; 
-            font-size: 0.75rem; 
-            text-decoration: none;
             font-weight: 600;
         }
-
-        /* SELECTION BAR */
-        #selection-bar { 
-            position: fixed; 
-            bottom: -120px; 
-            left: 0; 
-            width: 100%; 
-            background: var(--glass-bg);
-            border-top: 1px solid var(--glass-border); 
-            padding: 1.5rem; 
-            display: flex; 
-            align-items: center; 
-            gap: 1rem; 
-            z-index: 1001; 
-            transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            box-sizing: border-box;
-            backdrop-filter: blur(20px);
-            flex-wrap: wrap;
-        }
-        #selection-bar.visible { 
-            bottom: 0; 
-        }
-        #selection-bar button { 
-            padding: 0.75rem 1.5rem; 
-            font-size: 0.9rem; 
-            border-radius: 8px; 
-            border: none; 
-            background: var(--primary-color);
-            color: white; 
-            cursor: pointer; 
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-        #selection-bar .delete-btn { 
-            background: var(--danger-color);
-        }
-        #selection-bar button:hover { 
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-        }
-        #selection-bar .delete-btn:hover { 
-            background: var(--danger-hover);
-        }
-        #selection-counter { 
-            font-weight: 700; 
-            margin-right: auto; 
-            padding-left: 1rem;
-            color: var(--primary-color);
-        }
-
-        /* DRAG & DROP */
-        #drag-drop-overlay { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
-            height: 100vh; 
-            background: rgba(0,0,0,0.7);
-            z-index: 1002; 
-            display: none; 
-            opacity: 0; 
-            transition: opacity 0.3s;
-            backdrop-filter: blur(5px);
-        }
-        #drag-drop-overlay.visible { 
-            display: block; 
-            opacity: 1; 
-        }
-        #drop-zone-panel { 
-            position: fixed; 
-            top: 50%; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            width: 400px; 
-            z-index: 1003; 
-            background: var(--surface-color);
-            border: 1px solid var(--border-color); 
-            border-radius: 16px; 
-            box-shadow: var(--shadow-lg);
-            display: none; 
-            flex-direction: column;
-            max-height: 80vh;
-        }
-        #drop-zone-panel.visible { 
-            display: flex; 
-        }
-        #drop-zone-panel h3 { 
-            margin: 0; 
-            padding: 1.5rem; 
-            text-align: center; 
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        #drop-zone-folders { 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 0.75rem; 
-            padding: 1.5rem; 
-            max-height: 60vh; 
-        }
-        .drop-zone-folder-item { 
-            color: var(--text-color); 
-            padding: 1rem; 
-            border-radius: 8px; 
-            background: var(--glass-bg);
-            text-align: center; 
-            cursor: pointer; 
-            border: 2px solid var(--glass-border);
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        .drop-zone-folder-item.drag-over, 
-        .drop-zone-folder-item:hover { 
-            border-color: var(--primary-color);
-            background: rgba(0, 123, 255, 0.1);
-            transform: translateY(-2px);
-        }
-        #cancel-drop-btn { 
-            background: var(--danger-color);
-            color: white; 
-            border: none; 
-            padding: 1rem; 
-            cursor: pointer; 
-            border-bottom-left-radius: 16px; 
-            border-bottom-right-radius: 16px;
-            font-weight: 600;
-            transition: background-color 0.3s;
-        }
-        #cancel-drop-btn:hover {
-            background: var(--danger-hover);
-        }
-
-        /* LOADER */
-        #loader-overlay { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: var(--bg-color);
-            z-index: 9999; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            transition: opacity 0.4s;
-        }
-        .loader { 
-            border: 4px solid var(--surface-color);
-            border-top: 4px solid var(--primary-color); 
-            border-radius: 50%; 
-            width: 48px; 
-            height: 48px; 
-            animation: spin 1.2s linear infinite; 
-        }
-        @keyframes spin { 
-            100% { transform: rotate(360deg); } 
-        }
-
-        /* LIGHTBOX STYLING - REVAMPED */
-        #lightbox-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(20px);
-            z-index: 2000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #lightbox-overlay.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        #lightbox-content {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        #lightbox-media {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%; height: 100%;
-            padding: 60px 20px 20px;
-        }
-        #lightbox-media img,
-        #lightbox-media video {
-            max-width: 90vw;
-            max-height: 85vh;
-            object-fit: contain;
-            box-shadow: var(--shadow-lg);
-            border-radius: 12px;
-            transition: transform 0.3s ease-out;
-            cursor: grab;
-        }
-        #lightbox-media img:active,
-        #lightbox-media video:active {
-             cursor: grabbing;
-        }
+        .ts-control { background: var(--glass-bg) !important; border: 1px solid var(--glass-border) !important; border-radius: 8px !important; backdrop-filter: blur(10px) !important; }
+        .ts-dropdown, .ts-control, .ts-control input { color: var(--text-color) !important; }
+        .ts-dropdown { background: var(--surface-color) !important; border: 1px solid var(--border-color) !important; z-index: 1000; border-radius: 8px !important; box-shadow: var(--shadow-lg) !important; }
+        #gallery-anchor { display: block; position: relative; top: -20px; visibility: hidden; }
+        .gallery-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem; padding: 2rem; min-height: 50vh; }
+        .gallery-item { background: var(--glass-bg); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; position: relative; border: 2px solid transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); }
+        .gallery-item:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+        .gallery-item.selected { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2); }
+        .selection-checkmark { position: absolute; bottom: 12px; right: 12px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); border: 2px solid var(--text-color); border-radius: 50%; display: flex; justify-content: center; align-items: center; z-index: 11; transition: all 0.3s; color: transparent; cursor: pointer; font-size: 12px; backdrop-filter: blur(10px); }
+        .gallery-item.selected .selection-checkmark { background: var(--primary-color); border-color: var(--primary-color); color: white; transform: scale(1.1); }
+        .thumbnail-link { cursor: pointer; }
+        .thumbnail-wrapper { position: relative; width: 100%; background: var(--surface-color); overflow: hidden; }
+        .thumbnail-wrapper img, .thumbnail-wrapper video { display: block; width: 100%; height: auto; transition: transform 0.3s; }
+        .gallery-item:hover .thumbnail-wrapper img, .gallery-item:hover .thumbnail-wrapper video { transform: scale(1.05); }
+        .item-info { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 48px; }
+        .item-info p { margin: 0 0 1.5rem 0; word-wrap: break-word; font-size: 0.95rem; font-weight: 500; line-height: 1.4; }
+        .item-actions { display: flex; gap: 0.75rem; margin-top: auto; flex-wrap: wrap; }
+        .item-actions a, .item-actions button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: var(--glass-bg); color: var(--text-color); padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.8rem; border: 1px solid var(--glass-border); cursor: pointer; transition: all 0.3s; font-weight: 500; backdrop-filter: blur(10px); }
+        .item-actions .delete-btn { background: var(--danger-color); border-color: var(--danger-color); color: white; }
+        .favorite-btn.favorited { background: var(--favorite-color); color: #000; border-color: var(--favorite-color); }
+        .duration-overlay { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; backdrop-filter: blur(10px); z-index: 10; }
+        .workflow-badge { position: absolute; top: 8px; left: 8px; background: var(--workflow-color); color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; text-decoration: none; font-weight: 600; }
+        #selection-bar { position: fixed; bottom: 0; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); left: 320px; right: 0; background: var(--glass-bg); border-top: 1px solid var(--glass-border); padding: 1.5rem; display: flex; align-items: center; gap: 1rem; z-index: 1001; box-sizing: border-box; backdrop-filter: blur(20px); flex-wrap: wrap; }
+        #selection-bar.visible { transform: translateY(0); }
+        #selection-bar button { padding: 0.75rem 1.5rem; font-size: 0.9rem; border-radius: 8px; border: none; background: var(--primary-color); color: white; cursor: pointer; transition: all 0.3s; font-weight: 600; }
+        #selection-bar .delete-btn { background: var(--danger-color); }
+        #selection-counter { font-weight: 700; margin-right: auto; padding-left: 1rem; color: var(--primary-color); }
+        #drag-drop-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 1002; display: none; opacity: 0; transition: opacity 0.3s; backdrop-filter: blur(5px); }
+        #drag-drop-overlay.visible { display: block; opacity: 1; }
+        #drop-zone-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; z-index: 1003; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: var(--shadow-lg); display: none; flex-direction: column; max-height: 80vh; }
+        #drop-zone-panel.visible { display: flex; }
+        #drop-zone-panel h3 { margin: 0; padding: 1.5rem; text-align: center; border-bottom: 1px solid var(--border-color); font-weight: 600; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        #drop-zone-folders { overflow-y: auto; display: flex; flex-direction: column; padding: 1rem; max-height: 60vh; }
+        .drop-zone-folder-item { display: flex; align-items: center; padding: 8px; border-radius: 8px; transition: background-color 0.2s; cursor: pointer; position: relative; }
+        .drop-zone-folder-item:hover { background-color: var(--surface-hover); }
+        .drop-zone-folder-item .folder-link { flex-grow: 1; text-decoration: none; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 25px; cursor: pointer; }
+        .drop-zone-folder-item .folder-link:hover { background-color: rgba(0, 123, 255, 0.2); }
+        .drop-zone-folder-item .toggle-btn { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; user-select: none; }
+        .drop-zone-folder-item .toggle-btn.empty { visibility: hidden; }
+        #cancel-drop-btn { background: var(--danger-color); color: white; border: none; padding: 1rem; cursor: pointer; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; font-weight: 600; transition: background-color 0.3s; }
+        #loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.4s; }
+        .loader { border: 4px solid var(--surface-color); border-top: 4px solid var(--primary-color); border-radius: 50%; width: 48px; height: 48px; animation: spin 1.2s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
         
-        /* NEW LIGHTBOX HEADER */
-        #lightbox-header {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
-            backdrop-filter: blur(10px);
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 2001;
-        }
-        #lightbox-info {
-            color: white;
-            font-weight: 600;
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-        #lightbox-toolbar {
-            display: flex;
-            gap: 1rem;
-        }
-        #lightbox-toolbar button, 
-        #lightbox-toolbar a {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            padding: 0.75rem;
-            border-radius: 10px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 44px;
-            height: 44px;
-            backdrop-filter: blur(10px);
-        }
-        #lightbox-toolbar button:hover, 
-        #lightbox-toolbar a:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        #lightbox-toolbar .workflow-btn {
-            background: var(--workflow-color);
-            border-color: var(--workflow-color);
-        }
-        #lightbox-toolbar .workflow-btn:hover {
-            background: #20a239;
-            transform: translateY(-2px) scale(1.05);
-        }
-        
-        .lightbox-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            font-size: 1.8rem;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            line-height: 1;
-            backdrop-filter: blur(10px);
-            z-index: 2001;
-        }
-        .lightbox-nav:hover {
-            background: rgba(0,0,0,0.8);
-            border-color: var(--primary-color);
-            transform: translateY(-50%) scale(1.1);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        }
+        #lightbox-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); backdrop-filter: blur(20px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        #lightbox-overlay.visible { opacity: 1; pointer-events: auto; }
+        .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; width: 60px; height: 60px; font-size: 1.8rem; cursor: pointer; transition: all 0.3s; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px); z-index: 2001; }
         #lightbox-prev { left: 30px; }
         #lightbox-next { right: 30px; }
+        #lightbox-header {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 2002;
+            padding: 1rem; background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+            backdrop-filter: blur(10px); display: flex; flex-direction: column;
+            gap: 1rem; align-items: center; text-align: center;
+        }
+        #lightbox-title { font-size: 1.1rem; font-weight: 600; color: white; word-break: break-word; hyphens: auto; max-width: 90vw; }
+        #lightbox-toolbar { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.75rem; }
+        #lightbox-toolbar button, #lightbox-toolbar a {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 0.75rem; border-radius: 10px; font-size: 1.2rem; cursor: pointer; transition: all 0.3s;
+            text-decoration: none; display: flex; align-items: center; justify-content: center;
+            min-width: 44px; height: 44px; backdrop-filter: blur(10px);
+        }
+        #lightbox-toolbar button:hover, #lightbox-toolbar a:hover { background: rgba(255,255,255,0.2); }
+        #lightbox-content {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 100%; padding: 10rem 1rem 2rem; 
+        }
+        #lightbox-media { display: flex; align-items: center; justify-content: center; max-width: 95vw; max-height: 80vh; }
+        #lightbox-media img, #lightbox-media video { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px; box-shadow: var(--shadow-lg); cursor: grab; }
         
+        #backToTopBtn { display: none; position: fixed; bottom: 110px; right: 30px; z-index: 99; font-size: 1.2rem; border: none; background: var(--primary-color); color: white; cursor: pointer; padding: 12px 16px; border-radius: 50%; transition: all 0.3s; box-shadow: var(--shadow-md); }
+        #load-more-container { text-align: center; padding: 3rem; }
+        #load-more-btn { background: var(--gradient-primary); color: white; border: none; padding: 1rem 2.5rem; border-radius: 12px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.3s; box-shadow: var(--shadow-sm); }
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
         
-        /* UTILITIES */
-        #backToTopBtn { 
-            display: none; 
-            position: fixed; 
-            bottom: 110px; 
-            right: 30px; 
-            z-index: 99; 
-            font-size: 1.2rem; 
-            border: none; 
-            background: var(--primary-color);
-            color: white; 
-            cursor: pointer; 
-            padding: 12px 16px; 
-            border-radius: 50%;
-            transition: all 0.3s;
-            box-shadow: var(--shadow-md);
+        #node-summary-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+            z-index: 2100; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #backToTopBtn:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-lg);
+        #node-summary-overlay.visible { opacity: 1; pointer-events: auto; }
+        .node-summary-panel {
+            background: var(--surface-color); border: 1px solid var(--border-color);
+            border-radius: 16px; box-shadow: var(--shadow-lg);
+            width: 90vw; max-width: 600px;
+            max-height: 85vh; display: flex; flex-direction: column;
+            transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #load-more-container { 
-            text-align: center; 
-            padding: 3rem; 
+        #node-summary-overlay.visible .node-summary-panel { transform: scale(1); }
+        .node-summary-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color);
+            position: sticky; top: 0; background: var(--surface-color);
         }
-        #load-more-btn { 
-            background: var(--gradient-primary);
-            color: white; 
-            border: none; 
-            padding: 1rem 2.5rem; 
-            border-radius: 12px; 
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s;
-            box-shadow: var(--shadow-sm);
-        }
-        #load-more-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        .btn-spinner { 
-            display: inline-block; 
-            width: 1em; 
-            height: 1em; 
-            border: 2px solid rgba(255,255,255,0.3); 
-            border-radius: 50%; 
-            border-top-color: #fff; 
-            animation: spin 1s ease-in-out infinite; 
-            margin-right: 0.5em; 
-            vertical-align: middle; 
+        .node-summary-header h2 { margin: 0; font-size: 1.2rem; font-weight: 600; }
+        .node-summary-header .close-btn { background: none; border: none; color: var(--text-muted); font-size: 1.8rem; cursor: pointer; padding: 0; line-height: 1; }
+        #node-summary-content { padding: 1.5rem; overflow-y: auto; }
+        .summary-node-item { margin-bottom: 1.5rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+        .summary-node-header { color: white; padding: 0.75rem 1rem; font-weight: bold; font-size: 0.9rem; }
+        .summary-node-header small { opacity: 0.8; font-weight: normal; margin-left: 0.5rem; }
+        .summary-node-params { list-style: none; margin: 0; padding: 1rem; background: var(--glass-bg); }
+        .summary-node-params li { padding: 0.4rem 0; font-size: 0.85rem; border-bottom: 1px solid var(--glass-border); }
+        .summary-node-params li:last-child { border-bottom: none; }
+        .summary-node-params strong { color: var(--text-color); margin-right: 0.5rem; }
+        .summary-node-params code {
+            color: var(--text-muted); word-break: break-all; white-space: pre-wrap;
+            background: rgba(0,0,0,0.2); padding: 2px 5px; border-radius: 4px;
         }
 
-        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border-color); }
+            #selection-bar { left: 0; }
+            #sidebar-toggle-btn { display: block; }
+            .sidebar.nav-collapsed nav,
+            .sidebar.nav-collapsed #create-folder-btn {
+                display: none;
+            }
+        }
         @media (max-width: 768px) {
-            .header { padding: 1rem; }
-            .filter-bar { padding: 1rem; }
-            .filter-bar form { 
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            .gallery-container { 
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-                padding: 1rem; 
-                gap: 1.5rem;
-            }
-            #selection-bar { 
-                padding: 1rem;
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.75rem;
-            }
-            #selection-counter {
-                margin-right: 0;
-                padding-left: 0;
-                text-align: center;
-            }
-            #drop-zone-panel {
-                width: 90vw;
-                max-width: 400px;
-            }
-            .lightbox-nav {
-                width: 50px; height: 50px; font-size: 1.4rem;
-            }
+            .filter-bar form { grid-template-columns: 1fr; }
+            .gallery-container { grid-template-columns: 1fr; padding: 1rem; }
+            #selection-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; padding: 1rem; }
+            #selection-bar .actions-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; width: 100%; }
+            #selection-bar > #select-all-btn, #selection-bar > #deselect-all-btn { grid-column: span 2; }
+            #selection-counter { text-align: center; padding-left: 0; margin-bottom: 0.5rem; }
+            #drop-zone-panel { width: 90vw; }
+            .lightbox-nav { width: 50px; height: 50px; }
             #lightbox-prev { left: 10px; }
             #lightbox-next { right: 10px; }
-            #lightbox-header { padding: 0.75rem 1rem; }
-            #lightbox-toolbar { gap: 0.5rem; }
-            #lightbox-toolbar button, #lightbox-toolbar a { 
-                min-width: 40px; height: 40px; font-size: 1rem; 
-            }
-            #lightbox-info { font-size: 1rem; }
-        }
-
-        /* EMPTY STATE */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-muted);
-        }
-        .empty-state h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--text-color);
-        }
-        .empty-state p {
-            font-size: 1rem;
-            max-width: 400px;
-            margin: 0 auto;
         }
     </style>
 </head>
 <body>
-    <div id="loader-overlay"><div class="loader"></div></div>
-
-    <header class="header">
-        <div class="header-top">
-            <h1>📁 Gallery: {{ current_folder_name }}</h1>
-            <div class="navigation">
-                <nav>
-                    {% for key, folder in folders.items() %}
-                        <div class="folder-link {{ 'active' if key == current_folder_key else '' }}" data-folder-key="{{ key }}" data-folder-name="{{ folder.display_name }}">
-                            <a href="{{ url_for('gallery_view', folder_key=key) }}">{{ folder.display_name }}</a>
-                            {% if key not in protected_folder_keys %}
-                            <div class="folder-actions">
-                                <button class="folder-action-btn" title="Rename" onclick="renameFolder(event, '{{ key }}', '{{ folder.display_name }}')">✏️</button>
-                                <button class="folder-action-btn" title="Delete" onclick="deleteFolder(event, '{{ key }}', '{{ folder.display_name }}')">🗑️</button>
-                            </div>
-                            {% endif %}
-                        </div>
+    {% macro render_folder_tree(folder_key, folders, current_folder_key, protected_keys, ancestor_keys, is_move_panel=false) %}
+        {% set folder = folders.get(folder_key) %}
+        {% if folder is not none %}
+            {% set has_children = folder.children and folder.children|length > 0 %}
+            {% set is_collapsed = folder_key not in ancestor_keys %}
+            <li data-folder-key="{{ folder_key }}" class="{{ 'collapsed' if is_collapsed else '' }} {{ 'no-children' if not has_children else '' }}">
+                <div class="{{ 'folder-item' if not is_move_panel else 'drop-zone-folder-item' }}">
+                    <span class="toggle-btn {{ 'empty' if not has_children else '' }}"></span>
+                    {% if is_move_panel %}
+                        <span class="folder-link" data-folder-key="{{ folder_key }}" title="{{ folder.display_name }}">
+                            📁 {{ folder.display_name }}
+                        </span>
+                    {% else %}
+                        <span class="folder-link navigation-link {{ 'active' if folder_key == current_folder_key else '' }}" 
+                              data-folder-key="{{ folder_key }}" 
+                              data-folder-url="{{ url_for('gallery_view', folder_key=folder_key) }}"
+                              title="{{ folder.display_name }} {% if has_children %}(Click to expand, Double-click to navigate){% endif %}">
+                            📁 {{ folder.display_name }}
+                        </span>
+                    {% endif %}
+                    {% if not is_move_panel and folder_key != '_root_' and folder_key not in protected_keys %}
+                    <div class="folder-actions">
+                        <button class="folder-action-btn" title="Rename" onclick="renameFolder(event, '{{ folder_key }}', '{{ folder.display_name }}')">✏️</button>
+                        <button class="folder-action-btn" title="Delete" onclick="deleteFolder(event, '{{ folder_key }}', '{{ folder.display_name }}')">🗑️</button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if has_children %}
+                <ul>
+                    {% for child_key in folder.children %}
+                        {{ render_folder_tree(child_key, folders, current_folder_key, protected_keys, ancestor_keys, is_move_panel) }}
                     {% endfor %}
-                    <button id="create-folder-btn">➕ Create Folder</button>
-                </nav>
-            </div>
+                </ul>
+                {% endif %}
+            </li>
+        {% endif %}
+    {% endmacro %}
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('gallery_view', folder_key='_root_') }}" style="text-decoration: none;"><h1>SmartGallery</h1></a>
+            <button id="sidebar-toggle-btn">☰ Folders</button>
         </div>
-    </header>
+        <nav>
+            <ul class="folder-tree" id="folder-tree-nav">
+                {{ render_folder_tree(folder_key='_root_', folders=folders, current_folder_key=current_folder_key, protected_keys=protected_folder_keys, ancestor_keys=ancestor_keys) }}
+            </ul>
+        </nav>
+        <button id="create-folder-btn">➕ Create New Folder</button>
+    </aside>
 
-    <div class="filter-bar">
-        <form method="GET" action="{{ url_for('gallery_view', folder_key=current_folder_key) }}">
-            <div class="filter-group">
-                <label for="search-input">🔍 Search by Name</label>
-                <input type="text" name="search" id="search-input" placeholder="Search files by name..." value="{{ request.args.get('search', '') }}">
-            </div>
-            
-            <div class="filter-group">
-                <label for="extension-select">📄 Extensions</label>
-                <select name="extension" id="extension-select" multiple>
-                    {% for ext in available_extensions %}
-                    <option value="{{ ext }}" {% if ext in selected_extensions %}selected{% endif %}>{{ ext }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="filter-group">
-                <label for="prefix-select">🏷️ Prefixes</label>
-                <select name="prefix" id="prefix-select" multiple>
-                    {% for pfx in available_prefixes %}
-                        {% if pfx != '.gallery ' %}
-                        <option value="{{ pfx }}" {% if pfx in selected_prefixes %}selected{% endif %}>{{ pfx }}</option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="filter-group">
-                <div class="filter-group-inline">
-                    <input type="checkbox" name="favorites" id="favorites-check" value="true" {% if show_favorites %}checked{% endif %}>
-                    <label for="favorites-check">⭐ Favorites Only</label>
+    <div class="main-content">
+        <header class="breadcrumbs">
+            {% for crumb in breadcrumbs %}
+                <a href="{{ url_for('gallery_view', folder_key=crumb.key) }}">{{ crumb.display_name }}</a>
+                {% if not loop.last %}<span>/</span>{% endif %}
+            {% endfor %}
+        </header>
+        <div class="filter-bar">
+             <form method="GET" action="{{ url_for('gallery_view', folder_key=current_folder_key) }}">
+                <div class="filter-group"><label for="search-input">🔍 Search by Name</label><input type="text" name="search" id="search-input" placeholder="Search files in this folder..." value="{{ request.args.get('search', '') }}"></div>
+                <div class="filter-group"><label for="extension-select">📄 Extensions</label><select name="extension" id="extension-select" multiple>{% for ext in available_extensions %}<option value="{{ ext }}" {% if ext in selected_extensions %}selected{% endif %}>{{ ext }}</option>{% endfor %}</select></div>
+                <div class="filter-group"><label for="prefix-select">🏷️ Prefixes</label><select name="prefix" id="prefix-select" multiple>{% for pfx in available_prefixes %}{% if pfx != '.gallery ' %}<option value="{{ pfx }}" {% if pfx in selected_prefixes %}selected{% endif %}>{{ pfx }}</option>{% endif %}{% endfor %}</select></div>
+                <div class="filter-group"><div class="filter-group-inline"><input type="checkbox" name="favorites" id="favorites-check" value="true" {% if show_favorites %}checked{% endif %}><label for="favorites-check">⭐ Favorites Only</label></div></div>
+                <div class="filter-group">
+                    <label>Actions</label>
+                    <div class="filter-actions">
+                        {% set next_sort_order = 'asc' if current_sort_order == 'desc' else 'desc' %}
+                        <a href="{{ url_for('gallery_view', **dict(request.args.to_dict(), folder_key=current_folder_key, sort_order=next_sort_order)) }}" class="sort-btn" title="Change sort order">
+                            Sort by Date {% if current_sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                        </a>
+                        <button type="submit">🔍 Filter</button>
+                        <a href="{{ url_for('gallery_view', folder_key=current_folder_key) }}">🔄 Reset</a>
+                        <button type="button" id="refresh-btn" class="refresh-btn">♻️ Refresh</button>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="filter-group">
-                <label>&nbsp;</label>
-                <div class="filter-actions">
-                    <button type="submit">🔍 Filter</button>
-                    <a href="{{ url_for('gallery_view', folder_key=current_folder_key) }}">🔄 Reset</a>
-                    <button type="button" id="refresh-btn" class="refresh-btn">♻️ Refresh</button>
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
+        <div id="gallery-anchor"></div>
+        <main class="gallery-container" id="gallery-container"></main>
+        <div id="load-more-container"><button id="load-more-btn">📂 Load More</button></div>
     </div>
 
-    <main class="gallery-container" id="gallery-container">
-        <!-- Gallery items will be loaded here -->
-    </main>
-    
-    <div id="load-more-container">
-        <button id="load-more-btn">📂 Load More</button>
-    </div>
-    
     <button onclick="scrollToTop()" id="backToTopBtn" title="Back to top">⬆️</button>
-    
     <div id="drag-drop-overlay"></div>
-    <div id="drop-zone-panel">
-        <h3 id="drop-zone-title">📁 Move to:</h3>
-        <div id="drop-zone-folders"></div>
-        <button id="cancel-drop-btn">❌ Cancel</button>
-    </div>
-
+    <div id="drop-zone-panel"><h3 id="drop-zone-title">📁 Move to Folder:</h3><div id="drop-zone-folders"></div><button id="cancel-drop-btn">❌ Cancel</button></div>
     <div id="selection-bar">
         <span id="selection-counter">0 files selected</span>
-        <button id="move-selected-btn">📁 Move</button>
-        <button id="favorite-selected-btn">⭐ Add to Favorites</button>
-        <button id="unfavorite-selected-btn">☆ Remove from Favorites</button>
-        <button id="delete-selected-btn" class="delete-btn">🗑️ Delete</button>
-        <button id="select-all-btn">✅ Select All</button>
-        <button id="deselect-all-btn">❌ Deselect All</button>
+        <div class="actions-grid">
+            <button id="move-selected-btn">📁 Move</button>
+            <button id="favorite-selected-btn">⭐ Add</button>
+            <button id="unfavorite-selected-btn">☆ Remove</button>
+            <button id="delete-selected-btn" class="delete-btn">🗑️ Delete</button>
+            <button id="select-all-btn">✅ All</button>
+            <button id="deselect-all-btn">❌ None</button>
+        </div>
     </div>
-
-    <!-- NEW REVAMPED LIGHTBOX STRUCTURE -->
+    
     <div id="lightbox-overlay">
-        <div id="lightbox-content">
-            <div id="lightbox-header">
-                <div id="lightbox-info"></div>
-                <div id="lightbox-toolbar">
-                    <button id="lightbox-zoom-out" title="Zoom out">-</button>
-                    <button id="lightbox-zoom-in" title="Zoom in">+</button>
-                    <a id="lightbox-download" href="#" title="Download File">💾</a>
-                    <a id="lightbox-workflow" href="#" title="Download Workflow" class="workflow-btn">⚙️</a>
-                    <a id="lightbox-new-tab" href="#" target="_blank" title="Open in new tab">↗️</a>
-                    <button class="close-btn" onclick="closeLightbox()" title="Close (Esc)">×</button>
-                </div>
+        <div id="lightbox-header">
+            <div id="lightbox-title"></div>
+            <!-- MODIFICATO: Aggiunto il pulsante Node Summary alla toolbar della Lightbox -->
+            <div id="lightbox-toolbar">
+                <button id="lightbox-zoom-out" title="Zoom out">-</button>
+                <button id="lightbox-zoom-in" title="Zoom in">+</button>
+                <a id="lightbox-download" href="#" title="Download File">💾</a>
+                <button id="lightbox-summary-btn" title="Node Summary">📝</button>
+                <a id="lightbox-workflow" href="#" title="Download Workflow" class="workflow-btn">⚙️</a>
+                <a id="lightbox-new-tab" href="#" target="_blank" title="Open in new tab">↗️</a>
+                <button class="close-btn" onclick="closeLightbox()" title="Close (Esc)">×</button>
             </div>
-            <button id="lightbox-prev" class="lightbox-nav" title="Previous (←)">‹</button>
-            <button id="lightbox-next" class="lightbox-nav" title="Next (→)">›</button>
+        </div>
+        <div id="lightbox-content">
             <div id="lightbox-media"></div>
+        </div>
+        <button id="lightbox-prev" class="lightbox-nav" title="Previous (←)">‹</button>
+        <button id="lightbox-next" class="lightbox-nav" title="Next (→)">›</button>
+    </div>
+    
+    <div id="node-summary-overlay">
+        <div class="node-summary-panel">
+            <div class="node-summary-header">
+                <h2>📝 Node Summary</h2>
+                <button class="close-btn" id="close-summary-btn">×</button>
+            </div>
+            <div id="node-summary-content"></div>
         </div>
     </div>
 
+    <div id="loader-overlay"><div class="loader"></div></div>
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
-
     <script>
-        // --- GLOBAL ELEMENTS ---
+        const foldersData = {{ folders | tojson }};
+        const protectedFolderKeys = {{ protected_folder_keys | tojson }};
+        const initialFiles = {{ files | tojson }};
+        const totalFiles = {{ total_files }};
+        const currentFolderKey = '{{ current_folder_key }}';
+
         const galleryContainer = document.getElementById('gallery-container');
         const selectionBar = document.getElementById('selection-bar');
         const selectionCounter = document.getElementById('selection-counter');
         const loaderOverlay = document.getElementById('loader-overlay');
         const backToTopBtn = document.getElementById('backToTopBtn');
 
-        // --- GLOBAL DATA ---
-        const initialFiles = {{ files | tojson }};
-        const totalFiles = {{ total_files }};
-        const currentFolderKey = '{{ current_folder_key }}';
         let currentItemCount = 0;
         let galleryItems = [];
         let allFilesData = [];
-
-        // --- SELECTION STATE ---
         const selectedFiles = new Set();
         let lastSelectedItem = null;
 
-        // --- ACTIVE FILTERS DETECTION ---
-        function hasActiveFilters() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.has('search') || 
-                   urlParams.has('extension') || 
-                   urlParams.has('prefix') || 
-                   urlParams.has('favorites');
-        }
-
-        // --- BASIC FUNCTIONS ---
-        function handleError(error) { 
-            console.error('Error:', error); 
+        function handleError(error) {
+            console.error('Error:', error);
             showNotification('A network or server error occurred.', 'error');
         }
 
@@ -1011,63 +367,48 @@
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
             notification.textContent = message;
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 1rem 1.5rem;
-                border-radius: 8px;
-                color: white;
-                font-weight: 500;
-                z-index: 10000;
-                transform: translateX(400px);
-                transition: transform 0.3s ease;
-                background: ${type === 'error' ? 'var(--danger-color)' : type === 'success' ? 'var(--success-color)' : 'var(--primary-color)'};
-                box-shadow: var(--shadow-lg);
-                backdrop-filter: blur(10px);
-            `;
+            notification.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 8px; color: white; font-weight: 500; z-index: 10000; transform: translateX(400px); transition: transform 0.3s ease; background: ${type === 'error' ? 'var(--danger-color)' : type === 'success' ? 'var(--success-color)' : 'var(--primary-color)'}; box-shadow: var(--shadow-lg); backdrop-filter: blur(10px);`;
             document.body.appendChild(notification);
-            
             setTimeout(() => notification.style.transform = 'translateX(0)', 100);
             setTimeout(() => {
                 notification.style.transform = 'translateX(400px)';
                 setTimeout(() => document.body.removeChild(notification), 300);
             }, 3000);
         }
-        
+
         function handleGenericResponse(response) {
             return response.json().then(data => {
                 if (data.status === 'success') {
                     showNotification(data.message || 'Operation completed successfully!', 'success');
-                    const url = response.url.toString();
-                    const isCurrentFolderAffected = (url.includes('delete_folder') || url.includes('rename_folder')) && url.includes(currentFolderKey);
-                    if (isCurrentFolderAffected && currentFolderKey !== '_root_') {
-                        setTimeout(() => {
-                            window.location.href = "{{ url_for('gallery_view', folder_key='_root_') }}";
-                        }, 1000);
-                    } else { 
-                        setTimeout(() => window.location.reload(), 1000);
-                    }
-                } else { 
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
                     showNotification(`Error: ${data.message || 'Operation failed'}`, 'error');
                 }
             });
         }
-        
-        // --- GALLERY MANAGEMENT ---
+
         function createGalleryItem(file) {
             const item = document.createElement('div');
             item.className = 'gallery-item';
-            item.dataset.fileId = file.id; 
+            item.dataset.fileId = file.id;
+            item.dataset.fileType = file.type;
             item.setAttribute('draggable', 'true');
             item.addEventListener('dragstart', (event) => dragStart(event, file.id));
-            
-            let mediaHTML = `<div class="file-icon" style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 3rem; color: var(--text-muted);">📄</div>`;
-            if (['image', 'animated_image'].includes(file.type)) {
-                mediaHTML = `<img class="lazy" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.3em' fill='%23666'%3E🖼️%3C/text%3E%3C/svg%3E" data-src="/galleryout/thumbnail/${file.id}" alt="${file.name}" loading="lazy">`;
+
+            let mediaHTML = '';
+            if (file.type === 'audio') {
+                mediaHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size: 4rem; color: #1ed760;">🎵</div>`;
+            } else if (['image', 'animated_image'].includes(file.type)) {
+                mediaHTML = `<img class="lazy" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" data-src="/galleryout/thumbnail/${file.id}" alt="${file.name}" loading="lazy">`;
             } else if (file.type === 'video') {
-                mediaHTML = `<video autoplay muted loop playsinline class="lazy" data-src="/galleryout/file/${file.id}" poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.3em' fill='%23666'%3E🎬%3C/text%3E%3C/svg%3E"></video>`;
+                mediaHTML = `<video autoplay muted loop playsinline class="lazy" data-src="/galleryout/file/${file.id}" poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"></video>`;
+            } else {
+                mediaHTML = `<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 3rem; color: var(--text-muted);">📄</div>`;
             }
+
+            const summaryButtonHTML = file.has_workflow 
+                ? `<button title="Node Summary" onclick="showNodeSummary(event, '${file.id}')">📝</button>`
+                : '';
 
             item.innerHTML = `
                 <div class="selection-checkmark" onclick="toggleSelection(event, '${file.id}', this.closest('.gallery-item'))">✓</div>
@@ -1079,318 +420,285 @@
                     </div>
                 </div>
                 <div class="item-info">
-                    <p title="${file.name}">
-                        <strong>${file.name}</strong>
-                        ${file.dimensions ? `<br><span class="file-dimensions">📐 ${file.dimensions}</span>` : ''}
-                    </p>
+                    <p title="${file.name}"><strong>${file.name}</strong>${file.dimensions ? `<br><span style="font-size:0.8rem; color: var(--text-muted)">📐 ${file.dimensions}</span>` : ''}</p>
                     <div class="item-actions">
+                        ${summaryButtonHTML}
                         <button class="favorite-btn ${file.is_favorite ? 'favorited' : ''}" title="Favorite" onclick="toggleFavorite(event, '${file.id}', this)">${file.is_favorite ? '⭐' : '☆'}</button>
-                        <a href="/galleryout/download/${file.id}" onclick="event.stopPropagation()" title="Download">💾 Download</a>
-                        <button class="delete-btn" onclick="deleteFile(event, '${file.id}', this)">🗑️ Delete</button>
+                        <a href="/galleryout/download/${file.id}" onclick="event.stopPropagation()" title="Download">💾</a>
+                        <button class="delete-btn" onclick="deleteFile(event, '${file.id}', this)">🗑️</button>
                     </div>
                 </div>`;
-            
             return item;
         }
-
+        
         function appendFiles(files) {
             if (!files || files.length === 0) {
                 if (currentItemCount === 0) showEmptyState();
                 updateLoadMoreVisibility();
                 return;
             }
-
-            const fragment = document.createDocumentFragment(); 
+            const fragment = document.createDocumentFragment();
             const newLazyElements = [];
-            
-            files.forEach(file => { 
+            files.forEach(file => {
                 allFilesData.push(file);
-                const item = createGalleryItem(file); 
-                fragment.appendChild(item); 
-                galleryItems.push(item); 
-                const lazyEl = item.querySelector('.lazy'); 
-                if (lazyEl) newLazyElements.push(lazyEl); 
+                const item = createGalleryItem(file);
+                fragment.appendChild(item);
+                galleryItems.push(item);
+                const lazyEl = item.querySelector('.lazy');
+                if (lazyEl) newLazyElements.push(lazyEl);
             });
-            
-            galleryContainer.appendChild(fragment); 
-            initializeLazyLoading(newLazyElements); 
+            galleryContainer.appendChild(fragment);
+            initializeLazyLoading(newLazyElements);
             currentItemCount += files.length;
-            
             updateLoadMoreVisibility();
         }
 
         function updateLoadMoreVisibility() {
             const loadMoreContainer = document.getElementById('load-more-container');
             if (!loadMoreContainer) return;
-
-            // Hide the button if:
-            // 1. There are active filters
-            // 2. There are no files
-            // 3. All files are already loaded
-            const shouldHide = hasActiveFilters() || 
-                             currentItemCount === 0 || 
-                             currentItemCount >= totalFiles;
-
-            loadMoreContainer.style.display = shouldHide ? 'none' : 'block';
+            const hasFilters = new URLSearchParams(window.location.search).toString() !== '';
+            loadMoreContainer.style.display = (hasFilters || currentItemCount === 0 || currentItemCount >= totalFiles) ? 'none' : 'block';
         }
 
         function showEmptyState() {
-            galleryContainer.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><h3>📭 No files found</h3><p>There are no files matching your search criteria. Try changing the filters or uploading new files.</p></div>`;
+            galleryContainer.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><h3>📭 No files found</h3><p>There are no files matching your criteria in this folder.</p></div>`;
         }
 
-        function initializeLazyLoading(elements) { 
-            const observer = new IntersectionObserver((entries, obs) => { 
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) { 
-                        const el = entry.target; 
+        function initializeLazyLoading(elements) {
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
                         if (el.dataset.src) {
-                            el.src = el.dataset.src; 
-                            if (el.tagName === "VIDEO") el.load(); 
+                            el.src = el.dataset.src;
+                            if (el.tagName === "VIDEO") el.load();
                         }
-                        el.classList.remove("lazy"); 
-                        obs.unobserve(el); 
-                    } 
-                }); 
-            }, { rootMargin: '50px' }); 
-            elements.forEach(el => observer.observe(el)); 
+                        el.classList.remove("lazy");
+                        obs.unobserve(el);
+                    }
+                });
+            }, { rootMargin: '50px' });
+            elements.forEach(el => observer.observe(el));
         }
-        
-        // --- SELECTION LOGIC ---
+
+        function createFolder() {
+            const folderName = prompt("📁 Enter a name for the new folder (it will be created inside the current folder):");
+            if (folderName && folderName.trim()) {
+                fetch('/galleryout/create_folder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder_name: folderName.trim(), parent_key: currentFolderKey })
+                }).then(handleGenericResponse).catch(handleError);
+            }
+        }
+
+        function renameFolder(event, folderKey, oldName) {
+            event.stopPropagation();
+            const newName = prompt("✏️ Enter the new name for the folder:", oldName);
+            if (newName && newName.trim() && newName.trim() !== oldName) {
+                fetch(`/galleryout/rename_folder/${folderKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_name: newName.trim() })
+                }).then(handleGenericResponse).catch(handleError);
+            }
+        }
+
+        function deleteFolder(event, folderKey, folderName) {
+            event.stopPropagation();
+            if (confirm(`🗑️ Are you sure you want to delete the folder "${folderName}" and all its contents?\n\nThis action cannot be undone.`)) {
+                fetch(`/galleryout/delete_folder/${folderKey}`, { method: 'POST' }).then(handleGenericResponse).catch(handleError);
+            }
+        }
+
+        function handleMainTreeToggle(event) {
+            const target = event.target;
+            const isMobile = window.innerWidth <= 1024;
+
+            if (target.classList.contains('toggle-btn') && !target.classList.contains('empty')) {
+                event.stopPropagation();
+                target.closest('li').classList.toggle('collapsed');
+                return;
+            }
+
+            if (target.classList.contains('folder-link') && target.classList.contains('navigation-link')) {
+                event.stopPropagation();
+                const folderLi = target.closest('li');
+                const folderUrl = target.dataset.folderUrl;
+                
+                if (isMobile) {
+                    sessionStorage.setItem('galleryMobileNav', 'true');
+                    window.location.href = folderUrl;
+                } else {
+                    if (!folderLi.classList.contains('no-children')) {
+                        folderLi.classList.toggle('collapsed');
+                    }
+                    if (event.detail === 2) {
+                        window.location.href = folderUrl;
+                    }
+                }
+                return;
+            }
+        }
+
+        function populateAndShowDropPanel() {
+            const dropZoneFolders = document.getElementById('drop-zone-folders');
+            let treeHtml = `<ul class="folder-tree">${renderMoveTree('_root_', foldersData)}</ul>`;
+            dropZoneFolders.innerHTML = treeHtml;
+            document.getElementById('drag-drop-overlay').classList.add('visible');
+            document.getElementById('drop-zone-panel').classList.add('visible');
+        }
+
+        function renderMoveTree(folderKey, allFolders) {
+            const folder = allFolders[folderKey];
+            if (!folder) return '';
+            const hasChildren = folder.children && folder.children.length > 0;
+            let html = `<li data-folder-key="${folderKey}" class="collapsed ${!hasChildren ? 'no-children' : ''}">
+                <div class="drop-zone-folder-item">
+                    <span class="toggle-btn ${!hasChildren ? 'empty' : ''}" onclick="event.stopPropagation(); this.closest('li').classList.toggle('collapsed');"></span>
+                    <span class="folder-link" onclick="event.stopPropagation(); this.closest('li').classList.toggle('collapsed');">📁 ${folder.display_name}</span>
+                    <button class="move-here-btn" style="margin-left:auto; padding: 2px 8px; font-size: 14px;" onclick="confirmMoveToFolder('${folderKey}')" ${folderKey === currentFolderKey ? 'disabled' : ''}>➜</button>
+                </div>`;
+            if (hasChildren) {
+                html += `<ul>${folder.children.map(key => renderMoveTree(key, allFolders)).join('')}</ul>`;
+            }
+            html += `</li>`;
+            return html;
+        }
+
+        function confirmMoveToFolder(folderKey) {
+            if (!selectedFiles || selectedFiles.size === 0) { showNotification('No files selected.', 'warning'); return; }
+            performBatchAction('/galleryout/move_batch', { file_ids: [...selectedFiles], destination_folder: folderKey });
+            hideDropZone();
+        }
+
+        function hideDropZone() {
+            document.getElementById('drag-drop-overlay').classList.remove('visible');
+            document.getElementById('drop-zone-panel').classList.remove('visible');
+        }
+
+        function dragStart(event, fileId) {
+            event.stopPropagation();
+            if (!selectedFiles.has(fileId)) {
+                deselectAll();
+                selectedFiles.add(fileId);
+                updateSelectionUI();
+            }
+            const dragImage = document.createElement('div');
+            dragImage.style.cssText = `position: absolute; top: -100px; background: var(--primary-color); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600;`;
+            dragImage.textContent = `📦 ${selectedFiles.size} file${selectedFiles.size !== 1 ? 's' : ''}`;
+            document.body.appendChild(dragImage);
+            event.dataTransfer.setDragImage(dragImage, 0, 0);
+            setTimeout(() => document.body.removeChild(dragImage), 0);
+            event.dataTransfer.setData('text/plain', [...selectedFiles].join(','));
+            populateAndShowDropPanel();
+        }
+
         function toggleSelection(event, fileId, item) {
             event.stopPropagation();
             const isShift = event.shiftKey;
-
             if (isShift && lastSelectedItem) {
                 const lastIndex = galleryItems.findIndex(i => i.dataset.fileId === lastSelectedItem.dataset.fileId);
                 const currentIndex = galleryItems.findIndex(i => i.dataset.fileId === fileId);
                 const [start, end] = [lastIndex, currentIndex].sort((a,b) => a - b);
-                for (let i = start; i <= end; i++) selectedFiles.add(galleryItems[i].dataset.fileId);
+                for (let i = start; i <= end; i++) {
+                    selectedFiles.add(galleryItems[i].dataset.fileId);
+                }
             } else {
                 selectedFiles.has(fileId) ? selectedFiles.delete(fileId) : selectedFiles.add(fileId);
                 lastSelectedItem = item;
             }
             updateSelectionUI();
         }
-
+        
         function updateSelectionUI() {
-            galleryItems.forEach(item => { 
-                item.classList.toggle('selected', selectedFiles.has(item.dataset.fileId)); 
+            galleryItems.forEach(item => {
+                item.classList.toggle('selected', selectedFiles.has(item.dataset.fileId));
             });
             const count = selectedFiles.size;
             selectionCounter.textContent = `📊 ${count} file${count !== 1 ? 's' : ''} selected`;
-            
-            if (window.innerWidth <= 768) {
-                selectionBar.style.display = count > 0 ? 'flex' : 'none';
-                selectionBar.classList.toggle('visible', count > 0);
-            } else {
-                selectionBar.style.display = 'flex';
-                selectionBar.classList.toggle('visible', count > 0);
-            }
-        }
-        
-        function selectAll() { 
-            galleryItems.forEach(item => selectedFiles.add(item.dataset.fileId)); 
-            lastSelectedItem = galleryItems.length > 0 ? galleryItems[galleryItems.length - 1] : null; 
-            updateSelectionUI(); 
-        }
-        
-        function deselectAll() { 
-            selectedFiles.clear(); 
-            lastSelectedItem = null; 
-            updateSelectionUI(); 
+            selectionBar.classList.toggle('visible', count > 0);
         }
 
-        // --- SINGLE FILE ACTIONS ---
+        function selectAll() {
+            galleryItems.forEach(item => selectedFiles.add(item.dataset.fileId));
+            lastSelectedItem = galleryItems.length > 0 ? galleryItems[galleryItems.length - 1] : null;
+            updateSelectionUI();
+        }
+
+        function deselectAll() {
+            selectedFiles.clear();
+            lastSelectedItem = null;
+            updateSelectionUI();
+        }
+
         function toggleFavorite(event, fileId, element) {
             event.stopPropagation();
             const originalContent = element.innerHTML;
-            element.innerHTML = '⏳';
-            element.disabled = true;
-            
+            element.innerHTML = '⏳'; element.disabled = true;
             fetch(`/galleryout/toggle_favorite/${fileId}`, { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.status === 'success') { 
-                        element.classList.toggle('favorited', data.is_favorite); 
+                    if (data.status === 'success') {
+                        element.classList.toggle('favorited', data.is_favorite);
                         element.innerHTML = data.is_favorite ? '⭐' : '☆';
                         showNotification(data.is_favorite ? 'Added to favorites!' : 'Removed from favorites!', 'success');
                     } else {
-                        element.innerHTML = originalContent;
-                        showNotification('Error changing favorite status', 'error');
+                        element.innerHTML = originalContent; showNotification('Error toggling favorite', 'error');
                     }
                 })
-                .catch(error => {
-                    element.innerHTML = originalContent;
-                    handleError(error);
-                })
+                .catch(error => { element.innerHTML = originalContent; handleError(error); })
                 .finally(() => element.disabled = false);
         }
 
         function deleteFile(event, fileId, element) {
             event.stopPropagation();
-            if (!confirm('🗑️ Are you sure you want to delete this file?\n\nThis action cannot be undone.')) return;
-            
+            if (!confirm('🗑️ Are you sure you want to delete this file? This cannot be undone.')) return;
             const item = element.closest('.gallery-item');
-            element.innerHTML = '⏳ Deleting...';
             element.disabled = true;
-            
             fetch(`/galleryout/delete/${fileId}`, { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        item.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-                        item.style.opacity = '0';
-                        item.style.transform = 'scale(0.8) rotate(5deg)';
-                        showNotification('File deleted successfully!', 'success');
+                        item.style.transition = 'all 0.4s ease';
+                        item.style.opacity = '0'; item.style.transform = 'scale(0.8)';
+                        showNotification('File deleted!', 'success');
                         setTimeout(() => {
                             item.remove();
                             galleryItems = galleryItems.filter(gi => gi !== item);
                             selectedFiles.delete(fileId);
-                            updateSelectionUI();
-                            currentItemCount--;
-                            updateLoadMoreVisibility();
+                            updateSelectionUI(); currentItemCount--; updateLoadMoreVisibility();
                         }, 400);
-                    } else { 
-                        element.innerHTML = '🗑️ Delete';
-                        element.disabled = false;
+                    } else {
                         showNotification(`Error: ${data.message || 'Deletion failed'}`, 'error');
+                        element.disabled = false;
                     }
                 })
-                .catch(error => {
-                    element.innerHTML = '🗑️ Delete';
-                    element.disabled = false;
-                    handleError(error);
-                });
+                .catch(error => { handleError(error); element.disabled = false; });
         }
-        
-        // --- BATCH ACTIONS ---
+
         function moveSelected() { if (selectedFiles.size > 0) populateAndShowDropPanel(); }
-        
-        function deleteSelected() { 
-            const count = selectedFiles.size; 
-            if (count > 0 && confirm(`🗑️ Are you sure you want to delete ${count} files?\n\nThis action cannot be undone.`)) { 
-                const deleteBtn = document.getElementById('delete-selected-btn');
-                deleteBtn.innerHTML = '⏳ Deleting...';
-                deleteBtn.disabled = true;
-                performBatchAction('/galleryout/delete_batch', { file_ids: [...selectedFiles] }); 
-            } 
+        function deleteSelected() {
+            const count = selectedFiles.size;
+            if (count > 0 && confirm(`🗑️ Delete ${count} files? This cannot be undone.`)) {
+                performBatchAction('/galleryout/delete_batch', { file_ids: [...selectedFiles] });
+            }
         }
-        
         function favoriteSelected(status) {
             if (selectedFiles.size === 0) return;
-            const body = { file_ids: [...selectedFiles], status: status };
-            const btn = status ? document.getElementById('favorite-selected-btn') : document.getElementById('unfavorite-selected-btn');
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = '⏳ Processing...';
-            btn.disabled = true;
-            
-            fetch('/galleryout/favorite_batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    selectedFiles.forEach(fileId => {
-                        const item = document.querySelector(`.gallery-item[data-file-id="${fileId}"]`);
-                        if (item) {
-                            const favButton = item.querySelector('.favorite-btn');
-                            if (favButton) {
-                                favButton.classList.toggle('favorited', status);
-                                favButton.innerHTML = status ? '⭐' : '☆';
-                            }
-                        }
-                    });
-                    showNotification(status ? 'Files added to favorites!' : 'Files removed from favorites!', 'success');
-                } else {
-                    showNotification(`Error: ${data.message || 'Operation failed'}`, 'error');
-                }
-            })
-            .catch(handleError)
-            .finally(() => {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-            });
+            performBatchAction('/galleryout/favorite_batch', { file_ids: [...selectedFiles], status: status });
+        }
+        function performBatchAction(url, body) {
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }).then(handleGenericResponse).catch(handleError);
         }
 
-        function performBatchAction(url, body) { 
-            fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-            .then(handleGenericResponse).catch(handleError); 
-        }
-
-        // --- FOLDER MANAGEMENT ---
-        function createFolder() { 
-            const folderName = prompt("📁 Enter the name for the new folder:"); 
-            if (folderName && folderName.trim()) fetch('/galleryout/create_folder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder_name: folderName.trim() }) }).then(handleGenericResponse).catch(handleError);
-        }
-        
-        function renameFolder(event, folderKey, oldName) { 
-            event.stopPropagation(); 
-            const newName = prompt("✏️ Enter the new name for the folder:", oldName); 
-            if (newName && newName.trim() && newName.trim() !== oldName) fetch(`/galleryout/rename_folder/${folderKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ new_name: newName.trim() }) }).then(handleGenericResponse).catch(handleError);
-        }
-        
-        function deleteFolder(event, folderKey, folderName) { 
-            event.stopPropagation(); 
-            if (confirm(`🗑️ Are you sure you want to delete the folder "${folderName}"?\n\n⚠️ WARNING: This will only work if the folder is empty.\nThis action cannot be undone.`)) fetch(`/galleryout/delete_folder/${folderKey}`, { method: 'POST' }).then(handleGenericResponse).catch(handleError);
-        }
-        
-        // --- DRAG & DROP ---
-        function dragStart(event, fileId) {
-            event.stopPropagation(); 
-            if (!selectedFiles.has(fileId)) { deselectAll(); selectedFiles.add(fileId); updateSelectionUI(); }
-            
-            const dragImage = document.createElement('div'); 
-            dragImage.style.cssText = `position: absolute; top: -100px; background: var(--primary-color); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; box-shadow: var(--shadow-md); z-index: 10000;`; 
-            dragImage.textContent = `📦 ${selectedFiles.size} file${selectedFiles.size !== 1 ? 's' : ''}`; 
-            document.body.appendChild(dragImage); 
-            event.dataTransfer.setDragImage(dragImage, 0, 0); 
-            setTimeout(() => document.body.removeChild(dragImage), 0);
-            
-            event.dataTransfer.setData('text/plain', [...selectedFiles].join(',')); 
-            populateAndShowDropPanel();
-        }
-        
-        function populateAndShowDropPanel() {
-            const dropZoneFolders = document.getElementById('drop-zone-folders'); 
-            dropZoneFolders.innerHTML = '';
-            
-            let hasValidTargets = false;
-            document.querySelectorAll('.navigation .folder-link').forEach(link => {
-                if (link.dataset.folderKey === currentFolderKey) return;
-                hasValidTargets = true;
-                
-                const dropTarget = document.createElement('div'); 
-                dropTarget.className = 'drop-zone-folder-item'; 
-                dropTarget.innerHTML = `📁 ${link.dataset.folderName}`;
-                
-                const handleDrop = (e) => { 
-                    e.preventDefault(); 
-                    if (selectedFiles.size > 0) performBatchAction('/galleryout/move_batch', { file_ids: [...selectedFiles], destination_folder: link.dataset.folderKey }); 
-                    hideDropZone(); 
-                };
-                
-                dropTarget.addEventListener('dragover', (e) => { e.preventDefault(); dropTarget.classList.add('drag-over'); });
-                dropTarget.addEventListener('dragleave', () => dropTarget.classList.remove('drag-over'));
-                dropTarget.addEventListener('drop', handleDrop); 
-                dropTarget.addEventListener('click', handleDrop);
-                dropZoneFolders.appendChild(dropTarget);
-            });
-            
-            if (!hasValidTargets) dropZoneFolders.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">📭 No available destination folders</p>';
-            
-            document.getElementById('drag-drop-overlay').classList.add('visible'); 
-            document.getElementById('drop-zone-panel').classList.add('visible');
-        }
-        
-        function hideDropZone() { 
-            document.getElementById('drag-drop-overlay').classList.remove('visible'); 
-            document.getElementById('drop-zone-panel').classList.remove('visible'); 
-        }
-        
-        // --- REVAMPED LIGHTBOX ---
         const lightboxOverlay = document.getElementById('lightbox-overlay');
         const lightboxMedia = document.getElementById('lightbox-media');
-        const lightboxInfo = document.getElementById('lightbox-info');
-        const lightboxZoomIn = document.getElementById('lightbox-zoom-in');
-        const lightboxZoomOut = document.getElementById('lightbox-zoom-out');
+        const lightboxTitle = document.getElementById('lightbox-title');
         const lightboxDownload = document.getElementById('lightbox-download');
         const lightboxWorkflow = document.getElementById('lightbox-workflow');
         const lightboxNewTab = document.getElementById('lightbox-new-tab');
@@ -1398,19 +706,18 @@
         let currentZoom = 1;
 
         function openLightbox(event, fileId) {
+            if (event.target.closest('a, button')) return;
             event.stopPropagation();
             currentLightboxIndex = galleryItems.findIndex(item => item.dataset.fileId === fileId);
             if (currentLightboxIndex === -1) return;
-            
             document.body.classList.add('lightbox-open');
             lightboxOverlay.classList.add('visible');
             showItemAtIndex(currentLightboxIndex);
         }
 
         function closeLightbox() {
-            const video = lightboxMedia.querySelector('video');
-            if (video) video.pause();
-            
+            const mediaElement = lightboxMedia.querySelector('video, audio');
+            if (mediaElement) mediaElement.pause();
             document.body.classList.remove('lightbox-open');
             lightboxOverlay.classList.remove('visible');
             lightboxMedia.innerHTML = '';
@@ -1420,51 +727,56 @@
         function showItemAtIndex(index) {
             currentZoom = 1;
             const item = galleryItems[index];
+            if (!item) return;
             const file = allFilesData.find(f => f.id === item.dataset.fileId);
             if (!file) return;
 
-            // Update header info
-            lightboxInfo.textContent = file.name;
-
             lightboxMedia.innerHTML = '';
-            const isImage = ['image', 'animated_image'].includes(file.type);
+            lightboxTitle.textContent = file.name;
             
-            if (isImage) {
+            if (file.type === 'audio') {
+                const audio = document.createElement('audio');
+                audio.src = `/galleryout/file/${file.id}`;
+                audio.controls = true; audio.autoplay = true;
+                lightboxMedia.appendChild(audio);
+            } else if (['image', 'animated_image'].includes(file.type)) {
                 const img = document.createElement('img');
                 img.src = `/galleryout/file/${file.id}`;
                 img.alt = file.name;
+                img.style.transform = 'scale(1)';
                 lightboxMedia.appendChild(img);
-                lightboxZoomIn.style.display = 'flex';
-                lightboxZoomOut.style.display = 'flex';
             } else if (file.type === 'video') {
                 const video = document.createElement('video');
                 video.src = `/galleryout/file/${file.id}`;
-                video.controls = true;
-                video.autoplay = true;
-                video.loop = true;
+                video.controls = true; video.autoplay = true; video.loop = true;
                 lightboxMedia.appendChild(video);
-                lightboxZoomIn.style.display = 'none';
-                lightboxZoomOut.style.display = 'none';
+            } else {
+                lightboxMedia.innerHTML = `<div style="color: white; font-size: 1.2rem; text-align: center;">📄<br>Preview not available</div>`;
             }
 
-            // Update download and workflow links
             lightboxDownload.href = `/galleryout/download/${file.id}`;
             lightboxNewTab.href = `/galleryout/file/${file.id}`;
-            
-            // Show/hide workflow button
+
+            // --- MODIFICATO: Gestione dinamica dei pulsanti Workflow e Node Summary ---
+            const summaryBtn = document.getElementById('lightbox-summary-btn');
             if (file.has_workflow) {
                 lightboxWorkflow.href = `/galleryout/workflow/${file.id}`;
                 lightboxWorkflow.style.display = 'flex';
+                summaryBtn.style.display = 'flex';
+                summaryBtn.onclick = (event) => {
+                    event.stopPropagation();
+                    showNodeSummary(event, file.id);
+                };
             } else {
                 lightboxWorkflow.style.display = 'none';
+                summaryBtn.style.display = 'none';
+                summaryBtn.onclick = null;
             }
         }
-        
+
         function navigateLightbox(direction) {
             if (galleryItems.length === 0) return;
-            currentLightboxIndex += direction;
-            if (currentLightboxIndex < 0) currentLightboxIndex = galleryItems.length - 1;
-            if (currentLightboxIndex >= galleryItems.length) currentLightboxIndex = 0;
+            currentLightboxIndex = (currentLightboxIndex + direction + galleryItems.length) % galleryItems.length;
             showItemAtIndex(currentLightboxIndex);
         }
 
@@ -1475,20 +787,86 @@
             img.style.transform = `scale(${currentZoom})`;
         }
 
-        // --- INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', () => {
-            selectionBar.style.display = 'none';
-            selectionBar.classList.remove('visible');
-            
-            loaderOverlay.style.opacity = '0'; 
-            setTimeout(() => { loaderOverlay.style.display = 'none'; }, 300);
-            
-            appendFiles(initialFiles);
-            
-            const tomSelectSettings = { plugins: ['checkbox_options', 'clear_button'], create: false, maxItems: null };
-            new TomSelect('#extension-select', { ...tomSelectSettings, placeholder: '📄 Select extensions...' });
-            new TomSelect('#prefix-select', { ...tomSelectSettings, placeholder: '🏷️ Select prefixes...', render: { option: (data, escape) => (data.value === '.gallery ') ? '' : '<div>' + escape(data.text) + '</div>' } });
+        const summaryOverlay = document.getElementById('node-summary-overlay');
+        const summaryContent = document.getElementById('node-summary-content');
 
+        function escapeHTML(str) {
+            return str.toString().replace(/[&<>"']/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[m]);
+        }
+
+        async function showNodeSummary(event, fileId) {
+            event.stopPropagation();
+            summaryContent.innerHTML = '<div class="loader" style="margin: 2rem auto;"></div>';
+            document.body.classList.add('modal-open');
+            summaryOverlay.classList.add('visible');
+
+            try {
+                const response = await fetch(`/galleryout/node_summary/${fileId}`);
+                const data = await response.json();
+
+                if (data.status === 'success' && data.summary) {
+                    if (data.summary.length > 0) {
+                        let contentHTML = '';
+                        data.summary.forEach(node => {
+                            let paramsHTML = '<ul class="summary-node-params">';
+                            if (node.params && node.params.length > 0) {
+                                node.params.forEach(p => {
+                                    paramsHTML += `<li><strong>${escapeHTML(p.name)}:</strong> <code>${escapeHTML(p.value)}</code></li>`;
+                                });
+                            } else {
+                                paramsHTML += `<li>No parameters</li>`;
+                            }
+                            paramsHTML += '</ul>';
+                            contentHTML += `<div class="summary-node-item"><div class="summary-node-header" style="background-color: ${node.color};">${escapeHTML(node.type)} <small>(ID: ${node.id})</small></div>${paramsHTML}</div>`;
+                        });
+                        summaryContent.innerHTML = contentHTML;
+                    } else {
+                        summaryContent.innerHTML = '<p>No active nodes found in this workflow.</p>';
+                    }
+                } else {
+                    summaryContent.innerHTML = `<p style="color: var(--danger-color);">Error: ${data.message || 'Could not load summary.'}</p>`;
+                }
+            } catch (error) {
+                handleError(error);
+                summaryContent.innerHTML = `<p style="color: var(--danger-color);">A network error occurred while fetching the summary.</p>`;
+            }
+        }
+        
+        function closeNodeSummary() {
+            document.body.classList.remove('modal-open');
+            summaryOverlay.classList.remove('visible');
+            summaryContent.innerHTML = '';
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loaderOverlay.style.opacity = '0';
+            setTimeout(() => { loaderOverlay.style.display = 'none'; }, 400);
+
+            appendFiles(initialFiles);
+
+            new TomSelect('#extension-select', { plugins: ['checkbox_options', 'clear_button'], placeholder: '📄 Select extensions...' });
+            new TomSelect('#prefix-select', { plugins: ['checkbox_options', 'clear_button'], placeholder: '🏷️ Select prefixes...' });
+
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+            const galleryAnchor = document.getElementById('gallery-anchor');
+            const isMobile = window.innerWidth <= 1024;
+
+            if (sidebar && sidebarToggleBtn && isMobile) {
+                sidebar.classList.add('nav-collapsed');
+                sidebarToggleBtn.textContent = '☰ Show Folders';
+                sidebarToggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('nav-collapsed');
+                    sidebarToggleBtn.textContent = sidebar.classList.contains('nav-collapsed') ? '☰ Show Folders' : '✕ Hide Folders';
+                });
+            }
+            
+            if (isMobile && sessionStorage.getItem('galleryMobileNav') === 'true' && galleryAnchor) {
+                setTimeout(() => galleryAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                sessionStorage.removeItem('galleryMobileNav');
+            }
+
+            document.getElementById('folder-tree-nav').addEventListener('click', handleMainTreeToggle);
             document.getElementById('refresh-btn').addEventListener('click', () => window.location.reload());
             document.getElementById('create-folder-btn').addEventListener('click', createFolder);
             document.getElementById('cancel-drop-btn').addEventListener('click', hideDropZone);
@@ -1498,58 +876,44 @@
             document.getElementById('delete-selected-btn').addEventListener('click', deleteSelected);
             document.getElementById('favorite-selected-btn').addEventListener('click', () => favoriteSelected(true));
             document.getElementById('unfavorite-selected-btn').addEventListener('click', () => favoriteSelected(false));
-            
-            // Lightbox Listeners
-            document.querySelector('.close-btn').addEventListener('click', closeLightbox);
+
+            document.querySelector('#lightbox-overlay .close-btn').addEventListener('click', closeLightbox);
             document.getElementById('lightbox-prev').addEventListener('click', () => navigateLightbox(-1));
             document.getElementById('lightbox-next').addEventListener('click', () => navigateLightbox(1));
             document.getElementById('lightbox-zoom-in').addEventListener('click', () => zoomLightbox(0.2));
             document.getElementById('lightbox-zoom-out').addEventListener('click', () => zoomLightbox(-0.2));
-            lightboxOverlay.addEventListener('click', (e) => { if (e.target === lightboxOverlay) closeLightbox(); });
 
-            // Load More Button - MODIFIED
+            document.getElementById('close-summary-btn').addEventListener('click', closeNodeSummary);
+            summaryOverlay.addEventListener('click', (event) => {
+                if (event.target === summaryOverlay) closeNodeSummary();
+            });
+
             const loadMoreBtn = document.getElementById('load-more-btn');
             if (loadMoreBtn) {
                 loadMoreBtn.addEventListener('click', async function() {
-                    // Check for active filters
-                    if (hasActiveFilters()) {
-                        showNotification('The "Load More" button is not available during a filtered search.', 'info');
-                        return;
-                    }
-
-                    this.disabled = true; 
-                    this.innerHTML = '<span class="btn-spinner"></span>📂 Loading...';
-                    
-                    try { 
-                        const response = await fetch(`/galleryout/load_more?offset=${currentItemCount}`); 
-                        const data = await response.json(); 
-                        if (data.files && data.files.length > 0) {
-                            appendFiles(data.files);
-                        } else {
+                    this.disabled = true; this.innerHTML = '📂 Loading...';
+                    try {
+                        const response = await fetch(`/galleryout/load_more?offset=${currentItemCount}&folder_key=${currentFolderKey}`);
+                        const data = await response.json();
+                        if (data.files && data.files.length > 0) appendFiles(data.files);
+                        else {
                             showNotification('There are no more files to load.', 'info');
+                            this.style.display = 'none';
                         }
-                    } catch (error) { 
-                        this.textContent = '❌ Error. Try again.'; 
-                        handleError(error); 
-                        setTimeout(() => {
-                            this.innerHTML = '📂 Load More';
-                            this.disabled = false;
-                        }, 2000);
-                        return;
-                    } 
-                    
-                    // Restore the button only if necessary
-                    if (currentItemCount < totalFiles && !hasActiveFilters()) { 
-                        this.disabled = false; 
-                        this.innerHTML = '📂 Load More'; 
+                    } catch (error) { handleError(error); }
+                    if (currentItemCount < totalFiles) {
+                        this.disabled = false; this.innerHTML = '📂 Load More';
                     }
                 });
             }
-            
-            document.addEventListener('keydown', (event) => { 
-                if ((event.ctrlKey || event.metaKey) && event.key === 'a') { event.preventDefault(); selectAll(); } 
+
+            document.addEventListener('keydown', (event) => {
+                if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+                    event.preventDefault(); selectAll();
+                }
                 if (event.key === 'Escape') {
-                    if (lightboxOverlay.classList.contains('visible')) closeLightbox();
+                    if (summaryOverlay.classList.contains('visible')) closeNodeSummary();
+                    else if (lightboxOverlay.classList.contains('visible')) closeLightbox();
                     else if (selectedFiles.size > 0) deselectAll();
                     hideDropZone();
                 }
@@ -1559,16 +923,14 @@
                 }
             });
 
-            const searchInput = document.getElementById('search-input');
-            let searchTimeout;
-            searchInput.addEventListener('input', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => {}, 500); });
-            window.addEventListener('resize', updateSelectionUI);
+            window.onscroll = () => {
+                backToTopBtn.style.display = (window.scrollY > 300) ? 'block' : 'none';
+            };
         });
 
-        // Scroll utilities
-        window.onscroll = () => { backToTopBtn.style.display = (window.scrollY > 200) ? 'block' : 'none'; };
-        function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
-        document.addEventListener('click', (e) => { if (e.target === document.getElementById('drag-drop-overlay')) hideDropZone(); });
+        function scrollToTop() {
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
     </script>
 </body>
 </html>

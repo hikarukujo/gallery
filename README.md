@@ -1,204 +1,170 @@
-# SmartGallery for ComfyUI: Your Visual Hub with Universal Workflow Recall
-
-**If you find this project useful, please consider giving it a ⭐ star on GitHub! It helps a lot!**
+# SmartGallery for ComfyUI ✨
+### Your Visual Hub with Universal Workflow Recall and Node Summary
 
 <p align="center">
-  <img src="assets/smartgallery.png" alt="SmartGallery Interface" width="800">
+  <img src="assets/gallery_from_pc_screen.png" alt="SmartGallery Interface" width="800">
 </p>
 
 <p align="center">
-  <em>✨ Beautiful, fast, and organized gallery with automatic workflow capture for every generation</em>
+  <img src="assets/smartgallery-3.jpg" alt="SmartGallery Interface" width="800">
+</p>
+
+<p align="center">
+  <em>🎨 Beautiful, lightning-fast gallery that remembers the exact workflow behind every single creation</em>
 </p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License"></a>
-  <a><img src="https://img.shields.io/badge/Python-3.9+-blue.svg" alt="Python Version"></a>
+  <img src="https://img.shields.io/badge/Python-3.9+-blue.svg" alt="Python Version">
   <a href="https://github.com/biagiomaf/smart-comfyui-gallery/stargazers"><img src="https://img.shields.io/github/stars/biagiomaf/smart-comfyui-gallery?style=social" alt="GitHub stars"></a>
 </p>
 
-Tired of losing the magic recipe behind your amazing AI creations? Have you ever generated the perfect video or a stunning JPG in ComfyUI, only to realize you can't retrieve the workflow that made it?
+---
 
-**Your creative process is about to get a major upgrade.**
+## 🚀 The Problem Every ComfyUI User Faces
 
-SmartGallery is a complete system designed to revolutionize how you manage your ComfyUI outputs. It not only provides a beautiful, fast, and organized gallery for all your generated media but, for the first time, **automatically saves and links the workflow for *every single file* you generate**—be it a PNG, JPG, MP4, or WebP.
+You've just created the most stunning AI image or video of your life. It's perfect. Absolutely perfect.
 
-## 🎯 See SmartGallery in Action
+**But wait... what workflow did you use?** 😱
 
-<p align="center">
-  <img src="assets/smartgallery-3.jpg" alt="SmartGallery Features Overview" width="800">
-</p>
+Hours later, you're desperately trying to recreate that magic, clicking through endless nodes, tweaking parameters, and pulling your hair out because you can't remember the exact recipe that made it work.
 
-<p align="center">
-  <em>🔍 Advanced filtering, organization tools, and instant workflow access</em>
-</p>
-
-### The SmartGallery Advantage
-
-* **Universal Workflow Capture:** While ComfyUI's default save nodes only embed workflows in PNG files, and advanced custom save nodes require manual integration into each workflow, the `auto_log_workflows.py` custom node works seamlessly in the background. It automatically saves the complete workflow for every single job you run in ComfyUI, regardless of output format or which save nodes you use.
-* **Standalone Operation:** SmartGallery runs on its own port, meaning **you can manage your entire gallery even when ComfyUI is not running**. Organize your creations, move files between folders, delete unwanted outputs, and download workflows anytime.
-* **Blazing-Fast Interface:** Using an SQLite database and thumbnail caching, the gallery loads instantly, even with thousands of files.
-* **Full Organizational Control:** Create, rename, and delete folders, mark your favorite images, and use powerful search and filters to find exactly what you need.
-
-### ✨ The Two-Part System
-
-SmartGallery works its magic through two key components:
-
-1. **The Logger (`auto_log_workflows.py`):** This lightweight custom node hooks into the ComfyUI backend. It automatically saves a complete JSON workflow for every job, intelligently naming it to match the corresponding output file.
-2. **The Gallery Application (`smartgallery.py`):** A modern web interface that serves as your central hub. It reads your output folders and the workflow logs, linking them together and giving you a powerful set of tools to manage your entire collection.
+**This stops now.**
 
 ---
 
-### ⚙️ Installation & Setup Guide
+## 🎯 What Makes SmartGallery Revolutionary
 
-Setting up SmartGallery is a two-step process: installing the custom node in ComfyUI and running the gallery application.
+SmartGallery isn't just another image viewer. It's a **time machine for your creativity** that automatically links every single file you've ever generated to its exact workflow—whether it's PNG, JPG, MP4, or WebP.
 
-#### Step 1: Install the Background Logger in ComfyUI
+### ⚡ Key Features That Will Transform Your Workflow
 
-**Note:** This is not a traditional custom node that appears in the UI. Instead, `auto_log_workflows.py` is a **background execution hook** that runs silently behind the scenes to capture workflows automatically.
+- 🏃‍♂️ **Blazing Fast**: SQLite database + smart caching = instant loading even with thousands of files
+- 📱 **Mobile Perfect**: Gorgeous interface that works flawlessly on any device
+- 🔍 **Node Summary Magic**: See model, seed, and key parameters at a glance
+- 📁 **Total Organization**: Create, rename, delete folders; mark favorites; powerful search & filters
+- 🔧 **Standalone Power**: Works independently—manage your gallery even when ComfyUI is off
+- ⚡ **2-File Installation**: Just two files to transform your entire workflow
 
-1. From this repository, locate the `custom_nodes/auto_log_workflows.py` file in the project structure.
-2. Copy this single file directly to your ComfyUI `custom_nodes` directory:
-   ```
-   Your_ComfyUI_Folder/custom_nodes/auto_log_workflows.py
-   ```
-   **Important:** Unlike typical custom nodes that require their own folders, this file should be placed directly in the `custom_nodes` directory as a standalone Python file.
+<div align="center">
+  <img src="assets/gallery_from_mobile_screen.png" alt="Mobile View" width="300" style="display: inline-block; margin: 10px;">
+  <img src="assets/node_summary.png" alt="Node Summary" width="300" style="display: inline-block; margin: 10px;">
+</div>
 
-3. Restart ComfyUI. The background logger will now be active and will automatically save workflows to `Your_ComfyUI_Folder/input/workflow_logs_success/` for every job execution.
+<p align="center">
+  <em>📱 Perfect mobile experience | 🔍 Instant workflow insights</em>
+</p>
 
-> **💡 Technical Note:** This approach uses ComfyUI's execution hook system to intercept and log workflow data transparently. You won't see this as a node in your workflow - it works completely in the background, capturing the workflow JSON for every execution regardless of which save nodes you use.
+---
 
-> **⭐ Important Note on Existing Files:** The workflow logging will only apply to images and videos generated **after** you have installed the `auto_log_workflows.py` node.
->
-> * For previously generated files (JPGs, WebPs, etc.), the gallery will display them, but no workflow will be available for download.
-> * For existing PNG files that already contain embedded workflow data, the gallery will be able to extract and provide it.
+## 🎮 Installation: Ridiculously Simple
 
-#### Step 2: Set Up and Run the Gallery Application
-
-This guide assumes you have downloaded the SmartGallery project. The project has the following file structure:
-
-```
-smart-comfyui-gallery/
-├── smartgallery.py
-├── requirements.txt
-├── README.md
-├── custom_nodes/
-│   └── auto_log_workflows.py
-├── assets/
-│   ├── smartgallery.png
-│   └── smartgallery-3.jpg
-├── templates/
-│   └── index.html
-└── static/
-    └── galleryout/
-        └── favicon.ico
+### Step 1: Get the Code
+```bash
+git clone https://github.com/biagiomaf/smart-comfyui-gallery
+cd smart-comfyui-gallery
 ```
 
-**1. Configure Your Paths (Mandatory Step)**
+### Step 2: Quick Setup
+```bash
+# Create virtual environment (recommended)
+python -m venv venv
 
-This is the most important step to make the gallery work with your ComfyUI setup.
+# Activate it
+# Windows: venv\Scripts\activate
+# Mac/Linux: source venv/bin/activate
 
-* Open the `smartgallery.py` file with a text editor.
-* Locate the `--- USER CONFIGURATION ---` section at the top of the file.
-* You must change `BASE_OUTPUT_PATH` and `BASE_INPUT_PATH` to match your system's paths. You can also customize other settings here.
+# Install dependencies
+pip install -r requirements.txt
+```
 
-Here are the key variables you need to check:
+### Step 3: Configure Your Paths
+
+Open `smartgallery.py` and find the **User Configuration** section. Just update these paths to match your setup:
 
 ```python
-# --- USER CONFIGURATION ---
-# Modify the parameters in this section to adapt the gallery to your needs.
+# 🎯 Point to your ComfyUI folders
+BASE_OUTPUT_PATH = 'C:/your/path/to/ComfyUI/output'
+BASE_INPUT_PATH = 'C:/your/path/to/ComfyUI/input'
 
-# Path to the ComfyUI 'output' folder.
-# MUST be an absolute path. Example: 'C:/ComfyUI/output'
-BASE_OUTPUT_PATH = 'C:/path/to/your/ComfyUI/output'  # <-- CHANGE THIS
+# 🔧 Optional: FFmpeg path (for video workflow extraction)
+FFPROBE_MANUAL_PATH = "C:/path/to/ffprobe.exe"
 
-# Path to the ComfyUI 'input' folder.
-# MUST be an absolute path. Example: 'C:/ComfyUI/input'
-BASE_INPUT_PATH = 'C:/path/to/your/ComfyUI/input'   # <-- CHANGE THIS
-
-# Port on which the gallery web server will run.
-# Make sure this is NOT the same as your ComfyUI port (usually 8188).
+# 🌐 Choose your port (different from ComfyUI)
 SERVER_PORT = 8189
 ```
 
-**2. Create a Virtual Environment (Recommended)**
+> **💡 Pro Tip**: Use forward slashes (`/`) even on Windows for best compatibility!
 
-* Open your terminal or command prompt and navigate to the `smart-comfyui-gallery` project folder.
-* Create a virtual environment:
-  ```bash
-  python -m venv venv
-  ```
-* Activate the environment:
-  * **On Windows:** `venv\Scripts\activate`
-  * **On macOS/Linux:** `source venv/bin/activate`
+### Step 4: Launch & Enjoy
+```bash
+python smartgallery.py
+```
 
-**3. Install Dependencies**
+Visit **`http://127.0.0.1:8189/galleryout`** and watch the magic happen!
 
-* With your virtual environment active, install the required Python libraries:
-  ```bash
-  pip install -r requirements.txt
-  ```
+> **⏱️ First Run**: The initial launch takes a few minutes as SmartGallery builds your database and generates thumbnails. After that? Lightning fast!
 
-**4. Run the Gallery**
+---
 
-* In the same terminal, run the application:
-  ```bash
-  python smartgallery.py
-  ```
-* Open your web browser and go to: **`http://127.0.0.1:8189` or `http://127.0.0.1:8189/galleryout`**
+## 🛠️ Advanced Configuration
 
-> **⭐ Important First Run Note:** The very first time you run `smartgallery.py`, it may take a few minutes to become accessible. **This is normal!** The application is performing a one-time scan to build the SQLite database and generate thumbnails for all your existing files. Please be patient.
->
-> After this initial setup, subsequent launches of the gallery will be much faster.
+Want to customize your experience? Here are the key settings you can tweak:
 
-#### 🔄 Reverse Proxy Configuration
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `THUMBNAIL_WIDTH` | Thumbnail size in pixels | `300` |
+| `PAGE_SIZE` | Files to load initially | `100` |
+| `WEBP_ANIMATED_FPS` | Frame rate for WebP animations | `16.0` |
+| `SPECIAL_FOLDERS` | Custom folder names in menu | `['video', 'audio']` |
 
-If you want to serve SmartGallery behind a reverse proxy (like Nginx or Apache), make sure to configure your proxy to point to the correct URL endpoint:
+**FFmpeg Recommendation**: While optional, having FFmpeg installed unlocks full video workflow extraction capabilities. Download it from [ffmpeg.org](https://ffmpeg.org/) for the complete experience.
 
+---
+
+## 🌐 Reverse Proxy Setup
+
+Running behind Nginx or Apache? Point your proxy to:
 ```
 http://127.0.0.1:8189/galleryout
 ```
 
-This ensures that all static assets and routing work correctly when accessed through your reverse proxy setup.
+---
+
+## 🤝 Join the Community
+
+### Found a Bug? Have an Idea?
+**[➡️ Open an Issue](../../issues)** - I read every single one!
+
+### Want to Contribute?
+1. Fork the repo
+2. Create your feature branch (`git checkout -b amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin amazing-feature`)
+5. Open a Pull Request
+
+Let's build something incredible together! 🚀
 
 ---
 
-### 🤝 Contributing & Reporting Issues
+## 📄 License & Disclaimer
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. I welcome and encourage contributions to SmartGallery!
+SmartGallery is released under the **MIT License** - see [LICENSE](LICENSE) for details.
 
-#### 🐞 Reporting Bugs and Requesting Features
-
-Have you found a bug or have an idea for a new feature? The best way to let me know is by **opening a new issue** on GitHub.
-
-**[➡️ Click here to open a new issue](../../issues)**
-
-When you open an issue, please provide as much detail as possible:
-
-* **For Bug Reports:** Describe the steps to reproduce the problem, what you expected to happen, and what actually happened. Screenshots are incredibly helpful!
-* **For Feature Requests:** Clearly explain the new feature you would like to see and why it would be useful.
-
-#### 🛠️ Contributing Code (Pull Requests)
-
-If you'd like to fix a bug or implement a new feature yourself, that's fantastic! The process is:
-
-1. **Fork the repository:** Create your own copy of the project on your GitHub account.
-2. **Create a new branch:** Make a new branch in your fork for your changes (e.g., `fix/gallery-loading-bug`).
-3. **Make your changes:** Implement your bug fix or feature.
-4. **Commit and push:** Save your changes and push them to your forked repository.
-5. **Open a Pull Request:** Go to the original SmartGallery repository and open a pull request with a clear description of your changes.
-
-Let's build a better SmartGallery together!
+This software is provided "as is" without warranty. Use responsibly and in compliance with applicable laws.
 
 ---
 
-### 📜 Disclaimer and License
+## ❤️ Show Some Love
 
-This software is provided "as is", without warranty of any kind, express or implied. The author is not responsible for any damage or loss resulting from its use. You are solely responsible for how you use this software and for complying with any applicable laws. Please use it responsibly.
+If SmartGallery has transformed your ComfyUI workflow, **please give it a ⭐ star!** 
 
-The project is released under the **MIT License**. You can find the full license text in the [LICENSE](LICENSE) file.
+It takes 2 seconds but means the world to me and helps other creators discover this tool.
+
+**[⭐ Star this repo now!](https://github.com/biagiomaf/smart-comfyui-gallery/stargazers)**
 
 ---
 
-### ❤️ Support the Project
-
-If you've enjoyed using SmartGallery and it has helped you in your creative workflow, a simple star ⭐ to this repository would be greatly appreciated. It helps the project gain visibility and encourages me to continue its development. Thank you!
+<p align="center">
+  <em>Made with ❤️ for the ComfyUI community</em>
+</p>
