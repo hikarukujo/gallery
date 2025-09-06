@@ -275,10 +275,19 @@
                 <div class="filter-group">
                     <label>Actions</label>
                     <div class="filter-actions">
+                        {# --- Inizio Logica Corretta per il Link di Ordinamento --- #}
                         {% set next_sort_order = 'asc' if current_sort_order == 'desc' else 'desc' %}
-                        <a href="{{ url_for('gallery_view', **dict(request.args.to_dict(), folder_key=current_folder_key, sort_order=next_sort_order)) }}" class="sort-btn" title="Change sort order">
+                        
+                        {# Crea un dizionario con tutti i parametri della query corrente (preservando valori multipli come le estensioni)
+                           e aggiunge/sovrascrive il parametro 'sort_order' con il nuovo valore. #}
+                        {% set query_params = dict(request.args.to_dict(flat=False), sort_order=next_sort_order) %}
+                        
+                        <a href="{{ url_for('gallery_view', folder_key=current_folder_key, **query_params) }}" class="sort-btn" title="Change sort order">
                             Sort by Date {% if current_sort_order == 'asc' %}↑{% else %}↓{% endif %}
                         </a>
+                        {# --- Fine Logica Corretta per il Link di Ordinamento --- #}
+
+                        {# --- REINSERIMENTO DEI BOTTONI MANCANTI --- #}
                         <button type="submit">🔍 Filter</button>
                         <a href="{{ url_for('gallery_view', folder_key=current_folder_key) }}">🔄 Reset</a>
                         <button type="button" id="refresh-btn" class="refresh-btn">♻️ Refresh</button>
@@ -456,10 +465,14 @@
         function updateLoadMoreVisibility() {
             const loadMoreContainer = document.getElementById('load-more-container');
             if (!loadMoreContainer) return;
-            const hasFilters = new URLSearchParams(window.location.search).toString() !== '';
-            loadMoreContainer.style.display = (hasFilters || currentItemCount === 0 || currentItemCount >= totalFiles) ? 'none' : 'block';
-        }
 
+            // Nascondi il bottone se il numero di elementi visualizzati è uguale o superiore al totale
+            // che il backend ha comunicato per la query corrente, o se non ci sono proprio file.
+            const shouldHide = currentItemCount >= totalFiles || totalFiles === 0;
+            
+            loadMoreContainer.style.display = shouldHide ? 'none' : 'block';
+        }
+        
         function showEmptyState() {
             galleryContainer.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><h3>📭 No files found</h3><p>There are no files matching your criteria in this folder.</p></div>`;
         }
