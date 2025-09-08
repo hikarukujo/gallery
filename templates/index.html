@@ -242,7 +242,9 @@
                     {% if not is_move_panel and folder_key != '_root_' and folder_key not in protected_keys %}
                     <div class="folder-actions">
                         <button class="folder-action-btn" title="Rename" onclick="renameFolder(event, '{{ folder_key }}', '{{ folder.display_name }}')">✏️</button>
+                        {% if deletion_allowed %}
                         <button class="folder-action-btn" title="Delete" onclick="deleteFolder(event, '{{ folder_key }}', '{{ folder.display_name }}')">🗑️</button>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>
@@ -320,7 +322,9 @@
             <button id="move-selected-btn">📁 Move</button>
             <button id="favorite-selected-btn">⭐ Add</button>
             <button id="unfavorite-selected-btn">☆ Remove</button>
+            {% if deletion_allowed %}
             <button id="delete-selected-btn" class="delete-btn">🗑️ Delete</button>
+            {% endif %}
             <button id="select-all-btn">✅ All</button>
             <button id="deselect-all-btn">❌ None</button>
         </div>
@@ -365,6 +369,7 @@
         const initialFiles = {{ files | tojson }};
         const totalFiles = {{ total_files }};
         const currentFolderKey = '{{ current_folder_key }}';
+        const deletionAllowed = {{ deletion_allowed | tojson }};
 
         const galleryContainer = document.getElementById('gallery-container');
         const selectionBar = document.getElementById('selection-bar');
@@ -430,6 +435,10 @@
                 ? `<button title="Node Summary" onclick="showNodeSummary(event, '${file.id}')">📝</button>`
                 : '';
 
+            const deleteButtonHTML = deletionAllowed
+                ? `<button class="delete-btn" onclick="deleteFile(event, '${file.id}', this)">🗑️</button>`
+                : '';
+
             item.innerHTML = `
                 <div class="selection-checkmark" onclick="toggleSelection(event, '${file.id}', this.closest('.gallery-item'))">✓</div>
                 <div class="thumbnail-link" onclick="openLightbox(event, '${file.id}'); event.stopPropagation();" draggable="false">
@@ -445,7 +454,7 @@
                         ${summaryButtonHTML}
                         <button class="favorite-btn ${file.is_favorite ? 'favorited' : ''}" title="Favorite" onclick="toggleFavorite(event, '${file.id}', this)">${file.is_favorite ? '⭐' : '☆'}</button>
                         <a href="/galleryout/download/${file.id}" onclick="event.stopPropagation()" title="Download">💾</a>
-                        <button class="delete-btn" onclick="deleteFile(event, '${file.id}', this)">🗑️</button>
+                        ${deleteButtonHTML}
                     </div>
                 </div>`;
             return item;
