@@ -116,7 +116,7 @@ def get_client_ip():
     return remote_addr
 
 # --- DERIVED SETTINGS ---
-DB_SCHEMA_VERSION = 20
+DB_SCHEMA_VERSION = 21
 BASE_INPUT_PATH_WORKFLOW = os.path.join(BASE_INPUT_PATH, WORKFLOW_FOLDER_NAME)
 THUMBNAIL_CACHE_DIR = os.path.join(BASE_OUTPUT_PATH, THUMBNAIL_CACHE_FOLDER_NAME)
 SQLITE_CACHE_DIR = os.path.join(BASE_OUTPUT_PATH, SQLITE_CACHE_FOLDER_NAME)
@@ -242,9 +242,62 @@ def find_ffprobe_path():
 def _validate_and_get_workflow(json_string):
     try:
         data = json.loads(json_string)
+        
+        # First check for standard workflow format (has 'nodes' key)
         workflow_data = data.get('workflow', data.get('prompt', data))
-        if isinstance(workflow_data, dict) and 'nodes' in workflow_data: return json.dumps(workflow_data)
-    except Exception: pass
+        if isinstance(workflow_data, dict) and 'nodes' in workflow_data: 
+            return json.dumps(workflow_data)
+        
+        # Check if we have ComfyUI prompt format (numbered keys with node definitions)
+        if isinstance(data, dict):
+            # Check if it looks like a ComfyUI prompt structure (numbered keys)
+            numbered_keys = [k for k in data.keys() if k.isdigit()]
+            if numbered_keys:
+                # Convert ComfyUI prompt format to workflow format
+                nodes = []
+                for node_id in numbered_keys:
+                    node_data = data[node_id]
+                    if isinstance(node_data, dict) and 'class_type' in node_data:
+                        # Convert prompt node to workflow node format
+                        workflow_node = {
+                            'id': int(node_id),
+                            'type': node_data['class_type'],
+                            'pos': [0, 0],  # Default position
+                            'size': {'0': 210, '1': 46},  # Default size
+                            'flags': {},
+                            'order': int(node_id),
+                            'mode': 0,
+                            'inputs': [],
+                            'outputs': [],
+                            'properties': {},
+                        }
+                        
+                        # Extract widgets_values from inputs if available
+                        inputs = node_data.get('inputs', {})
+                        if inputs:
+                            # Convert inputs dict to widgets_values list for compatibility
+                            widgets_values = []
+                            for key, value in inputs.items():
+                                if not isinstance(value, list):  # Skip connection references
+                                    widgets_values.append(value)
+                            if widgets_values:
+                                workflow_node['widgets_values'] = widgets_values
+                        
+                        nodes.append(workflow_node)
+                
+                if nodes:
+                    converted_workflow = {
+                        'nodes': nodes,
+                        'links': [],  # We don't have link info in prompt format
+                        'groups': [],
+                        'config': {},
+                        'extra': {},
+                        'version': 0.4
+                    }
+                    return json.dumps(converted_workflow)
+        
+    except Exception: 
+        pass
     return None
 
 def _scan_bytes_for_workflow(content_bytes):

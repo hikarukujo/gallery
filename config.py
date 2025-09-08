@@ -22,10 +22,10 @@
 import os
 
 # Path to the ComfyUI 'output' folder.
-BASE_OUTPUT_PATH = os.environ.get('GALLERY_BASE_OUTPUT_PATH', 'C:/sm/Data/Packages/ComfyUI/output')
+BASE_OUTPUT_PATH = os.environ.get('GALLERY_BASE_OUTPUT_PATH', 'output')
 
 # Path to the ComfyUI 'input' folder (used for locating .json workflows).
-BASE_INPUT_PATH = os.environ.get('GALLERY_BASE_INPUT_PATH', 'C:/sm/Data/Packages/ComfyUI/input')
+BASE_INPUT_PATH = os.environ.get('GALLERY_BASE_INPUT_PATH', 'input')
 
 # Path to the ffmpeg utility "ffprobe.exe" (Windows). 
 # On Linux, adjust the filename accordingly. 
