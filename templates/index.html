@@ -158,7 +158,8 @@
         .node-summary-panel {
             background: var(--surface-color); border: 1px solid var(--border-color);
             border-radius: 16px; box-shadow: var(--shadow-lg);
-            width: 90vw; max-width: 600px;
+            width: 90vw; /* Usa il 90% della larghezza della viewport */
+            max-width: 900px; /* NUOVA larghezza massima, aumentata di 300px */
             max-height: 85vh; display: flex; flex-direction: column;
             transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -175,7 +176,7 @@
         .summary-node-header { color: white; padding: 0.75rem 1rem; font-weight: bold; font-size: 0.9rem; }
         .summary-node-header small { opacity: 0.8; font-weight: normal; margin-left: 0.5rem; }
         .summary-node-params { list-style: none; margin: 0; padding: 1rem; background: var(--glass-bg); }
-        .summary-node-params li { padding: 0.4rem 0; font-size: 0.85rem; border-bottom: 1px solid var(--glass-border); }
+        .summary-node-params li { padding: 0.5rem 0; font-size: 1rem; /* FONT AUMENTATO */ border-bottom: 1px solid var(--glass-border); }
         .summary-node-params li:last-child { border-bottom: none; }
         .summary-node-params strong { color: var(--text-color); margin-right: 0.5rem; }
         .summary-node-params code {
@@ -204,6 +205,16 @@
             .lightbox-nav { width: 50px; height: 50px; }
             #lightbox-prev { left: 10px; }
             #lightbox-next { right: 10px; }
+        }
+        @media (max-width: 768px) {
+            .node-summary-panel {
+                width: 95vw; /* Su mobile, occupa quasi tutto lo schermo */
+                max-height: 90vh; /* Permetti un'altezza leggermente maggiore */
+            }
+
+            .summary-node-params li {
+                font-size: 0.9rem; /* Un font leggermente più piccolo su mobile per non occupare troppo spazio verticale */
+            }
         }
     </style>
 </head>
@@ -803,8 +814,21 @@
         const summaryOverlay = document.getElementById('node-summary-overlay');
         const summaryContent = document.getElementById('node-summary-content');
 
-        function escapeHTML(str) {
-            return str.toString().replace(/[&<>"']/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[m]);
+        function escapeHTML(value) {
+            if (value === null || typeof value === 'undefined') {
+                return '<em>null</em>'; 
+            }
+
+            if (typeof value === 'object') {
+                try {
+                    const jsonString = JSON.stringify(value, null, 2); 
+                    return jsonString.replace(/[&<>"']/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[m]);
+                } catch (e) {
+                    return '[Unserializable Object]';
+                }
+            }
+
+            return value.toString().replace(/[&<>"']/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;','&quot;': '&quot;', "'": '&#39;'})[m]);
         }
 
         async function showNodeSummary(event, fileId) {
