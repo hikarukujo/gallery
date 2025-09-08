@@ -75,3 +75,4 @@ Thumbs.db
 # Your data dirs (root-level)
 /input/
 /output/
+C:/sm/Data/Packages/ComfyUI/output/.sqlite_cache/gallery_cache.sqlite

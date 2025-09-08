@@ -93,13 +93,27 @@ def get_client_ip():
     Get the real client IP address, considering proxy headers.
     """
     # Check for forwarded headers (when behind proxy/load balancer)
-    if request.headers.get('X-Forwarded-For'):
-        # X-Forwarded-For can contain multiple IPs, get the first one
-        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
-    elif request.headers.get('X-Real-IP'):
-        return request.headers.get('X-Real-IP')
-    else:
-        return request.remote_addr
+    x_forwarded_for = request.headers.get('X-Forwarded-For')
+    if x_forwarded_for:
+        # X-Forwarded-For can contain multiple IPs, get the first one (original client)
+        # Format: "client_ip, proxy1_ip, proxy2_ip, ..."
+        client_ip = x_forwarded_for.split(',')[0].strip()
+        print(f"DEBUG: X-Forwarded-For header found: {x_forwarded_for}, using client IP: {client_ip}")
+        return client_ip
+    
+    x_real_ip = request.headers.get('X-Real-IP')
+    if x_real_ip:
+        print(f"DEBUG: X-Real-IP header found: {x_real_ip}")
+        return x_real_ip
+    
+    # For AWS ALB, also check for X-Forwarded-Proto and X-Forwarded-Port
+    x_forwarded_proto = request.headers.get('X-Forwarded-Proto')
+    if x_forwarded_proto:
+        print(f"DEBUG: X-Forwarded-Proto header found: {x_forwarded_proto}")
+    
+    remote_addr = request.remote_addr
+    print(f"DEBUG: Using remote_addr: {remote_addr}")
+    return remote_addr
 
 # --- DERIVED SETTINGS ---
 DB_SCHEMA_VERSION = 20
@@ -682,16 +696,21 @@ def create_folder():
         return jsonify({'status': 'success', 'message': 'Folder created successfully.'})
     except Exception as e: return jsonify({'status': 'error', 'message': f'Error creating folder: {e}'}), 500
 
-@app.route('/galleryout/check_deletion_permission')
-def check_deletion_permission():
-    """API endpoint to check if the current client can perform deletions."""
+@app.route('/galleryout/debug_headers')
+def debug_headers():
+    """Debug endpoint to show all request headers and IP detection."""
     client_ip = get_client_ip()
     allowed, reason = is_deletion_allowed(client_ip)
-    return jsonify({
+    
+    headers_info = {
+        'client_ip': client_ip,
         'deletion_allowed': allowed,
-        'reason': reason,
-        'client_ip': client_ip
-    })
+        'deletion_reason': reason,
+        'remote_addr': request.remote_addr,
+        'headers': dict(request.headers)
+    }
+    
+    return jsonify(headers_info)
 
 @app.route('/galleryout/rename_folder/<string:folder_key>', methods=['POST'])
 def rename_folder(folder_key):
