@@ -1,14 +1,23 @@
-# Python
+# ---- Python ----
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Packaging / build artifacts
+.build/
 build/
-develop-eggs/
 dist/
+develop-eggs/
 downloads/
-eggs/
 .eggs/
 lib/
 lib64/
@@ -16,29 +25,53 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+pip-wheel-metadata/
+pip-log.txt
+MANIFEST
 
-# Virtual Environment
-venv/
-env/
-ENV/
+# Tests / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.pytest_cache/
+.cache
+coverage.xml
+nosetests.xml
+junit.xml
+pytestdebug.log
 
-# Database
-*.db
-*.sqlite3
+# Type checkers / linters
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+.pylint.d/
 
-# Thumbnails
-thumbs/
-thumbnails/
+# Notebooks
+.ipynb_checkpoints
 
-# IDE
+# IDE/editor
 .vscode/
 .idea/
-*.swp
-*.swo
+*.code-workspace
 
-# OS
+# OS cruft
 .DS_Store
 Thumbs.db
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Your data dirs (root-level)
+/input/
+/output/

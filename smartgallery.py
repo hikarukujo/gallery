@@ -19,57 +19,24 @@ import glob
 import sys
 import subprocess
 import base64
+import ipaddress
 from flask import Flask, render_template, send_from_directory, abort, send_file, url_for, redirect, request, jsonify, Response
 from PIL import Image, ImageSequence
 import colorsys
 
-# --- USER CONFIGURATION ---
-# Adjust the parameters in this section to customize the gallery.
-#
-# IMPORTANT:
-# - Even on Windows, always use forward slashes ( / ) in paths, 
-#   not backslashes ( \ ), to ensure compatibility.
-# - It is strongly recommended to have ffmpeg installed, 
-#   since some features depend on it.
-
-# Path to the ComfyUI 'output' folder.
-BASE_OUTPUT_PATH = 'C:/sm/Data/Packages/ComfyUI/output'
-
-# Path to the ComfyUI 'input' folder (used for locating .json workflows).
-BASE_INPUT_PATH = 'C:/sm/Data/Packages/ComfyUI/input'
-
-# Path to the ffmpeg utility "ffprobe.exe" (Windows). 
-# On Linux, adjust the filename accordingly. 
-# This is required for extracting workflows from .mp4 files.  
-# NOTE: Having a full ffmpeg installation is highly recommended.
-FFPROBE_MANUAL_PATH = "C:/omgp10/ffmpeg2/bin/ffprobe.exe"
-
-# Port on which the gallery web server will run. 
-# Must be different from the ComfyUI port.  
-# Note: the gallery does not require ComfyUI to be running; it works independently.
-SERVER_PORT = 8189
-
-# Width (in pixels) of the generated thumbnails.
-THUMBNAIL_WIDTH = 300
-
-# Assumed frame rate for animated WebP files.  
-# Many tools, including ComfyUI, generate WebP animations at ~16 FPS.  
-# Adjust this value if your WebPs use a different frame rate,  
-# so that animation durations are calculated correctly.
-WEBP_ANIMATED_FPS = 16.0
-
-# Maximum number of files to load initially before showing a "Load more" button.  
-# Use a very large number (e.g., 9999999) for "infinite" loading.
-PAGE_SIZE = 100 
-
-# Names of special folders (e.g., 'video', 'audio').  
-# These folders will appear in the menu only if they exist inside BASE_OUTPUT_PATH.  
-# Leave as-is if unsure.
-SPECIAL_FOLDERS = ['video', 'audio']
-
-# ------- END OF USER CONFIGURATION -------
-
-
+# Import user configuration
+from config import (
+    BASE_OUTPUT_PATH,
+    BASE_INPUT_PATH,
+    FFPROBE_MANUAL_PATH,
+    SERVER_PORT,
+    THUMBNAIL_WIDTH,
+    WEBP_ANIMATED_FPS,
+    PAGE_SIZE,
+    SPECIAL_FOLDERS,
+    ENABLE_DELETION,
+    DELETION_ALLOWED_IPS
+)
 
 # --- CACHE AND FOLDER NAMES ---
 THUMBNAIL_CACHE_FOLDER_NAME = '.thumbnails_cache'
@@ -87,6 +54,52 @@ def key_to_path(key):
     try:
         return base64.urlsafe_b64decode(key.encode()).decode().replace('/', os.sep)
     except Exception: return None
+
+def is_deletion_allowed(client_ip):
+    """
+    Check if deletion is allowed based on configuration and client IP.
+    Returns (allowed: bool, reason: str)
+    """
+    if not ENABLE_DELETION:
+        return False, "Deletion is disabled in configuration"
+    
+    # If no IP restrictions are configured, allow deletion from any IP
+    if not DELETION_ALLOWED_IPS:
+        return True, "Deletion allowed"
+    
+    # Check if client IP is in allowed list
+    try:
+        client_addr = ipaddress.ip_address(client_ip)
+        for allowed_ip in DELETION_ALLOWED_IPS:
+            try:
+                # Check if it's a CIDR block or single IP
+                if '/' in allowed_ip:
+                    # CIDR block
+                    if client_addr in ipaddress.ip_network(allowed_ip, strict=False):
+                        return True, "IP allowed by CIDR rule"
+                else:
+                    # Single IP
+                    if client_addr == ipaddress.ip_address(allowed_ip):
+                        return True, "IP explicitly allowed"
+            except ValueError:
+                # Invalid IP format in configuration, skip it
+                continue
+        return False, f"IP {client_ip} not in allowed list"
+    except ValueError:
+        return False, f"Invalid client IP format: {client_ip}"
+
+def get_client_ip():
+    """
+    Get the real client IP address, considering proxy headers.
+    """
+    # Check for forwarded headers (when behind proxy/load balancer)
+    if request.headers.get('X-Forwarded-For'):
+        # X-Forwarded-For can contain multiple IPs, get the first one
+        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
+    elif request.headers.get('X-Real-IP'):
+        return request.headers.get('X-Real-IP')
+    else:
+        return request.remote_addr
 
 # --- DERIVED SETTINGS ---
 DB_SCHEMA_VERSION = 20
@@ -628,6 +641,10 @@ def gallery_view(folder_key):
         curr_key = folder_info.get('parent')
     breadcrumbs.reverse()
     
+    # Check deletion permissions for the current client
+    client_ip = get_client_ip()
+    deletion_allowed, deletion_reason = is_deletion_allowed(client_ip)
+    
     return render_template('index.html', 
                            files=initial_files, 
                            total_files=len(gallery_view_cache), 
@@ -643,7 +660,10 @@ def gallery_view(folder_key):
                            show_favorites=request.args.get('favorites', 'false').lower() == 'true', 
                            # MODIFICATION 3: Pass the current sort order to the template
                            current_sort_order=sort_order,
-                           protected_folder_keys=list(PROTECTED_FOLDER_KEYS))
+                           protected_folder_keys=list(PROTECTED_FOLDER_KEYS),
+                           # MODIFICATION 4: Pass deletion permission status to template
+                           deletion_allowed=deletion_allowed,
+                           deletion_reason=deletion_reason)
                            
 @app.route('/galleryout/create_folder', methods=['POST'])
 def create_folder():
@@ -661,6 +681,17 @@ def create_folder():
         get_dynamic_folder_config(force_refresh=True)
         return jsonify({'status': 'success', 'message': 'Folder created successfully.'})
     except Exception as e: return jsonify({'status': 'error', 'message': f'Error creating folder: {e}'}), 500
+
+@app.route('/galleryout/check_deletion_permission')
+def check_deletion_permission():
+    """API endpoint to check if the current client can perform deletions."""
+    client_ip = get_client_ip()
+    allowed, reason = is_deletion_allowed(client_ip)
+    return jsonify({
+        'deletion_allowed': allowed,
+        'reason': reason,
+        'client_ip': client_ip
+    })
 
 @app.route('/galleryout/rename_folder/<string:folder_key>', methods=['POST'])
 def rename_folder(folder_key):
@@ -690,6 +721,12 @@ def rename_folder(folder_key):
 
 @app.route('/galleryout/delete_folder/<string:folder_key>', methods=['POST'])
 def delete_folder(folder_key):
+    # Check deletion permissions
+    client_ip = get_client_ip()
+    allowed, reason = is_deletion_allowed(client_ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': f'Deletion not permitted: {reason}'}), 403
+    
     if folder_key in PROTECTED_FOLDER_KEYS: return jsonify({'status': 'error', 'message': 'This folder cannot be deleted.'}), 403
     folders = get_dynamic_folder_config()
     if folder_key not in folders: return jsonify({'status': 'error', 'message': 'Folder not found.'}), 404
@@ -745,6 +782,12 @@ def move_batch():
 
 @app.route('/galleryout/delete_batch', methods=['POST'])
 def delete_batch():
+    # Check deletion permissions
+    client_ip = get_client_ip()
+    allowed, reason = is_deletion_allowed(client_ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': f'Deletion not permitted: {reason}'}), 403
+    
     file_ids = request.json.get('file_ids', [])
     if not file_ids: return jsonify({'status': 'error', 'message': 'No files selected.'}), 400
     deleted_count = 0
@@ -805,6 +848,12 @@ def download_workflow(file_id):
 
 @app.route('/galleryout/delete/<string:file_id>', methods=['POST'])
 def delete_file(file_id):
+    # Check deletion permissions
+    client_ip = get_client_ip()
+    allowed, reason = is_deletion_allowed(client_ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': f'Deletion not permitted: {reason}'}), 403
+    
     try:
         filepath = get_file_info_from_db(file_id, 'path')
         os.remove(filepath)
