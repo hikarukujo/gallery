@@ -269,7 +269,9 @@
                 {{ render_folder_tree(folder_key='_root_', folders=folders, current_folder_key=current_folder_key, protected_keys=protected_folder_keys, ancestor_keys=ancestor_keys) }}
             </ul>
         </nav>
+        {% if deletion_allowed %}
         <button id="create-folder-btn">➕ Create New Folder</button>
+        {% endif %}
     </aside>
 
     <div class="main-content">
@@ -914,7 +916,11 @@
 
             document.getElementById('folder-tree-nav').addEventListener('click', handleMainTreeToggle);
             document.getElementById('refresh-btn').addEventListener('click', () => window.location.reload());
-            document.getElementById('create-folder-btn').addEventListener('click', createFolder);
+            
+            const createFolderBtn = document.getElementById('create-folder-btn');
+            if (createFolderBtn) {
+                createFolderBtn.addEventListener('click', createFolder);
+            }
             document.getElementById('cancel-drop-btn').addEventListener('click', hideDropZone);
             document.getElementById('select-all-btn').addEventListener('click', selectAll);
             document.getElementById('deselect-all-btn').addEventListener('click', deselectAll);

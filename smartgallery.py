@@ -734,6 +734,12 @@ def gallery_view(folder_key):
                            
 @app.route('/galleryout/create_folder', methods=['POST'])
 def create_folder():
+    # Check deletion permissions (same logic as deletion since this is a modification operation)
+    client_ip = get_client_ip()
+    allowed, reason = is_deletion_allowed(client_ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': f'Folder creation not permitted: {reason}'}), 403
+    
     data = request.json
     parent_key = data.get('parent_key', '_root_')
     folder_name = re.sub(r'[^a-zA-Z0-9_-]', '', data.get('folder_name', '')).strip()

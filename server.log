@@ -1,0 +1,18 @@
+ * Tip: There are .env files present. Install python-dotenv to use them.
+INFO: Initializing gallery...
+INFO: DB version (22) is up to date. Starting normally.
+Gallery started! Open: http://127.0.0.1:8189/galleryout/
+ * Serving Flask app 'smartgallery'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8189
+ * Running on http://10.13.4.186:8189
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [08/Sep/2025 22:51:38] "POST /galleryout/create_folder HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2025 22:51:41] "[32mGET /galleryout/?id=c9a97b01-bef2-4216-948e-c39d74f3f067&vscodeBrowserReqId=1757386301767 HTTP/1.1[0m" 302 -
+127.0.0.1 - - [08/Sep/2025 22:51:41] "GET /galleryout/view/_root_ HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2025 22:51:41] "[36mGET /galleryout/thumbnail/c3820b87e77eac6c25a6994765bdff30 HTTP/1.1[0m" 304 -
+127.0.0.1 - - [08/Sep/2025 22:51:41] "[36mGET /galleryout/thumbnail/cd81479c1ad9044a765015a1717df160 HTTP/1.1[0m" 304 -
+127.0.0.1 - - [08/Sep/2025 22:51:41] "[36mGET /galleryout/thumbnail/0cce66a743932528ec68140bea284d3e HTTP/1.1[0m" 304 -
+127.0.0.1 - - [08/Sep/2025 22:51:41] "[36mGET /galleryout/thumbnail/70d1a56f1cc1f201dbe8517968b3e9f5 HTTP/1.1[0m" 304 -
