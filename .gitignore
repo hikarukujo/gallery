@@ -76,3 +76,4 @@ Thumbs.db
 /input/
 /output/
 C:/sm/Data/Packages/ComfyUI/output/.sqlite_cache/gallery_cache.sqlite
+server.log
