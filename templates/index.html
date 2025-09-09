@@ -22,21 +22,28 @@
         html { scroll-behavior: smooth; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif; margin: 0; background: var(--bg-color); color: var(--text-color); line-height: 1.6; display: flex; min-height: 100vh; }
         body.lightbox-open, body.modal-open { overflow: hidden; }
-        .sidebar { width: 320px; background: var(--surface-color); border-right: 1px solid var(--border-color); padding: 1.5rem; display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
+        .sidebar { width: 320px; background: var(--surface-color); border-right: 1px solid var(--border-color); padding: 15px; display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
         .main-content { flex-grow: 1; padding-bottom: 80px; }
         .sidebar-header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
         .sidebar-header h1 { margin: 0; font-size: 1.8rem; font-weight: 700; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         #sidebar-toggle-btn { display: none; background: var(--surface-hover); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
-        .folder-tree, .folder-tree ul { list-style: none; padding: 0; margin: 0; }
-        .folder-tree { flex-grow: 1; }
-        .folder-tree li { padding-left: 20px; position: relative; }
+        .folder-tree { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
+        .folder-tree ul { list-style: none; padding: 0; margin: 0; padding-inline-start: 0; }
+        .folder-tree li { padding-left: 15px; position: relative; }
         .folder-tree > li:first-child { padding-left: 0; }
-        .folder-item { display: flex; align-items: center; padding: 8px; border-radius: 8px; transition: background-color 0.2s; position: relative; }
+        .prefix-list { margin-top: 0.5rem; }
+        .prefix-item { padding-left: 4px; position: relative; }
+        .prefix-item .folder-item { background: rgba(255, 255, 255, 0.02); padding: 4px 8px; }
+        .prefix-item .folder-item:hover { background: var(--surface-hover); }
+        .prefix-item .folder-item.active { background: var(--primary-color); color: white; }
+        .prefix-link { color: var(--text-muted) !important; font-size: 0.9rem; }
+        .prefix-item .folder-item.active .prefix-link { color: white !important; }
+        .folder-item { display: flex; align-items: center; padding: 4px 8px; border-radius: 8px; transition: background-color 0.2s; position: relative; }
         .folder-item:hover { background-color: var(--surface-hover); }
         .folder-item.active { background-color: var(--primary-color); color: white; font-weight: 600; }
-        .toggle-btn { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; user-select: none; }
+        .toggle-btn { position: absolute; left: -15px; top: 50%; transform: translateY(-50%); width: 15px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; user-select: none; }
         .toggle-btn.empty { visibility: hidden; }
-        .folder-link { flex-grow: 1; text-decoration: none; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 25px; cursor: pointer; }
+        .folder-link { flex-grow: 1; text-decoration: none; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 0; cursor: pointer; }
         .folder-link.navigation-link { cursor: pointer; }
         .folder-actions { margin-left: auto; display: flex; }
         .folder-action-btn { background: none; border: none; color: inherit; cursor: pointer; padding: 4px; border-radius: 4px; font-size: 0.9rem; opacity: 0.7; transition: all 0.2s; }
@@ -107,9 +114,9 @@
         #drop-zone-folders { overflow-y: auto; display: flex; flex-direction: column; padding: 1rem; max-height: 60vh; }
         .drop-zone-folder-item { display: flex; align-items: center; padding: 8px; border-radius: 8px; transition: background-color 0.2s; cursor: pointer; position: relative; }
         .drop-zone-folder-item:hover { background-color: var(--surface-hover); }
-        .drop-zone-folder-item .folder-link { flex-grow: 1; text-decoration: none; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 25px; cursor: pointer; }
+        .drop-zone-folder-item .folder-link { flex-grow: 1; text-decoration: none; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 0; cursor: pointer; }
         .drop-zone-folder-item .folder-link:hover { background-color: rgba(0, 123, 255, 0.2); }
-        .drop-zone-folder-item .toggle-btn { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; user-select: none; }
+        .drop-zone-folder-item .toggle-btn { position: absolute; left: -15px; top: 50%; transform: translateY(-50%); width: 15px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; user-select: none; }
         .drop-zone-folder-item .toggle-btn.empty { visibility: hidden; }
         #cancel-drop-btn { background: var(--danger-color); color: white; border: none; padding: 1rem; cursor: pointer; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; font-weight: 600; transition: background-color 0.3s; }
         #loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.4s; }
@@ -235,7 +242,7 @@
                         <span class="folder-link navigation-link {{ 'active' if folder_key == current_folder_key else '' }}" 
                               data-folder-key="{{ folder_key }}" 
                               data-folder-url="{{ url_for('gallery_view', folder_key=folder_key) }}"
-                              title="{{ folder.display_name }} {% if has_children %}(Click to expand, Double-click to navigate){% endif %}">
+                              title="{{ folder.display_name }} (Click to navigate)">>
                             📁 {{ folder.display_name }}
                         </span>
                     {% endif %}
@@ -252,6 +259,25 @@
                 <ul>
                     {% for child_key in folder.children %}
                         {{ render_folder_tree(child_key, folders, current_folder_key, protected_keys, ancestor_keys, is_move_panel) }}
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                {# Show prefixes under the Main (_root_) folder #}
+                {% if not is_move_panel and folder_key == '_root_' and all_prefixes and all_prefixes|length > 0 %}
+                <ul class="prefix-list">
+                    {% for prefix in all_prefixes %}
+                        {% set is_selected = prefix in selected_prefixes %}
+                        <li class="prefix-item" data-prefix="{{ prefix }}">
+                            <div class="folder-item {{ 'active' if is_selected else '' }}">
+                                <span class="toggle-btn empty"></span>
+                                <span class="folder-link navigation-link prefix-link" 
+                                      data-prefix="{{ prefix }}"
+                                      title="Filter by prefix: {{ prefix }}">
+                                    🏷️ {{ prefix }}
+                                </span>
+                            </div>
+                        </li>
                     {% endfor %}
                 </ul>
                 {% endif %}
@@ -285,7 +311,6 @@
              <form method="GET" action="{{ url_for('gallery_view', folder_key=current_folder_key) }}">
                 <div class="filter-group"><label for="search-input">🔍 Search by Name</label><input type="text" name="search" id="search-input" placeholder="Search files in this folder..." value="{{ request.args.get('search', '') }}"></div>
                 <div class="filter-group"><label for="extension-select">📄 Extensions</label><select name="extension" id="extension-select" multiple>{% for ext in available_extensions %}<option value="{{ ext }}" {% if ext in selected_extensions %}selected{% endif %}>{{ ext }}</option>{% endfor %}</select></div>
-                <div class="filter-group"><label for="prefix-select">🏷️ Prefixes</label><select name="prefix" id="prefix-select" multiple>{% for pfx in available_prefixes %}{% if pfx != '.gallery ' %}<option value="{{ pfx }}" {% if pfx in selected_prefixes %}selected{% endif %}>{{ pfx }}</option>{% endif %}{% endfor %}</select></div>
                 <div class="filter-group"><div class="filter-group-inline"><input type="checkbox" name="favorites" id="favorites-check" value="true" {% if show_favorites %}checked{% endif %}><label for="favorites-check">⭐ Favorites Only</label></div></div>
                 <div class="filter-group">
                     <label>Actions</label>
@@ -556,6 +581,20 @@
                 return;
             }
 
+            // Handle prefix link clicks
+            if (target.classList.contains('prefix-link')) {
+                event.stopPropagation();
+                const prefix = target.dataset.prefix;
+                if (prefix) {
+                    // Navigate to current folder with prefix filter
+                    const url = new URL(window.location);
+                    url.searchParams.delete('prefix'); // Clear existing prefix params
+                    url.searchParams.append('prefix', prefix);
+                    window.location.href = url.toString();
+                }
+                return;
+            }
+
             if (target.classList.contains('folder-link') && target.classList.contains('navigation-link')) {
                 event.stopPropagation();
                 const folderLi = target.closest('li');
@@ -565,12 +604,8 @@
                     sessionStorage.setItem('galleryMobileNav', 'true');
                     window.location.href = folderUrl;
                 } else {
-                    if (!folderLi.classList.contains('no-children')) {
-                        folderLi.classList.toggle('collapsed');
-                    }
-                    if (event.detail === 2) {
-                        window.location.href = folderUrl;
-                    }
+                    // Single click navigates immediately for better UX
+                    window.location.href = folderUrl;
                 }
                 return;
             }
@@ -893,7 +928,6 @@
             appendFiles(initialFiles);
 
             new TomSelect('#extension-select', { plugins: ['checkbox_options', 'clear_button'], placeholder: '📄 Select extensions...' });
-            new TomSelect('#prefix-select', { plugins: ['checkbox_options', 'clear_button'], placeholder: '🏷️ Select prefixes...' });
 
             const sidebar = document.querySelector('.sidebar');
             const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');

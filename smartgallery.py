@@ -614,6 +614,22 @@ def scan_folder_and_extract_options(folder_path):
     except Exception as e: print(f"ERROR: Could not scan folder '{folder_path}': {e}")
     return None, sorted(list(extensions)), sorted(list(prefixes))
 
+def get_all_prefixes():
+    """Get all unique prefixes from all files in the gallery database."""
+    prefixes = set()
+    try:
+        with get_db_connection() as conn:
+            files = conn.execute("SELECT name FROM files").fetchall()
+            for row in files:
+                filename = row['name']
+                if '_' in filename:
+                    prefix = filename.split('_')[0]
+                    if prefix:  # Only add non-empty prefixes
+                        prefixes.add(prefix)
+    except Exception as e:
+        print(f"ERROR: Could not get all prefixes: {e}")
+    return sorted(list(prefixes))
+
 def initialize_gallery():
     print("INFO: Initializing gallery...")
     global FFPROBE_EXECUTABLE_PATH
@@ -699,6 +715,7 @@ def gallery_view(folder_key):
     gallery_view_cache = all_files_filtered
     initial_files = gallery_view_cache[:PAGE_SIZE]
     _, extensions, prefixes = scan_folder_and_extract_options(folder_path)
+    all_prefixes = get_all_prefixes()  # Get all prefixes for sidebar
     breadcrumbs, ancestor_keys = [], set()
     curr_key = folder_key
     while curr_key is not None and curr_key in folders:
@@ -722,6 +739,7 @@ def gallery_view(folder_key):
                            ancestor_keys=list(ancestor_keys),
                            available_extensions=extensions, 
                            available_prefixes=prefixes,
+                           all_prefixes=all_prefixes,  # All prefixes for sidebar
                            selected_extensions=request.args.getlist('extension'), 
                            selected_prefixes=request.args.getlist('prefix'),
                            show_favorites=request.args.get('favorites', 'false').lower() == 'true', 
