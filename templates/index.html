@@ -241,8 +241,8 @@
                     {% endif %}
                     {% if not is_move_panel and folder_key != '_root_' and folder_key not in protected_keys %}
                     <div class="folder-actions">
-                        <button class="folder-action-btn" title="Rename" onclick="renameFolder(event, '{{ folder_key }}', '{{ folder.display_name }}')">✏️</button>
                         {% if deletion_allowed %}
+                        <button class="folder-action-btn" title="Rename" onclick="renameFolder(event, '{{ folder_key }}', '{{ folder.display_name }}')">✏️</button>
                         <button class="folder-action-btn" title="Delete" onclick="deleteFolder(event, '{{ folder_key }}', '{{ folder.display_name }}')">🗑️</button>
                         {% endif %}
                     </div>

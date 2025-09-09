@@ -773,6 +773,12 @@ def debug_headers():
 
 @app.route('/galleryout/rename_folder/<string:folder_key>', methods=['POST'])
 def rename_folder(folder_key):
+    # Check deletion permissions (same logic as deletion since this is a modification operation)
+    client_ip = get_client_ip()
+    allowed, reason = is_deletion_allowed(client_ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': f'Folder rename not permitted: {reason}'}), 403
+    
     if folder_key in PROTECTED_FOLDER_KEYS: return jsonify({'status': 'error', 'message': 'This folder cannot be renamed.'}), 403
     new_name = re.sub(r'[^a-zA-Z0-9_-]', '', request.json.get('new_name', '')).strip()
     if not new_name: return jsonify({'status': 'error', 'message': 'Invalid name.'}), 400
