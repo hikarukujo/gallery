@@ -118,8 +118,13 @@ def get_client_ip():
 # --- DERIVED SETTINGS ---
 DB_SCHEMA_VERSION = 21
 BASE_INPUT_PATH_WORKFLOW = os.path.join(BASE_INPUT_PATH, WORKFLOW_FOLDER_NAME)
-THUMBNAIL_CACHE_DIR = os.path.join(BASE_OUTPUT_PATH, THUMBNAIL_CACHE_FOLDER_NAME)
-SQLITE_CACHE_DIR = os.path.join(BASE_OUTPUT_PATH, SQLITE_CACHE_FOLDER_NAME)
+# Cache (thumbnails + SQLite index) may live somewhere other than BASE_OUTPUT_PATH.
+# In containerized / remote-storage setups, point GALLERY_CACHE_DIR at a fast LOCAL
+# volume so the SQLite DB and thumbnails are never written onto a network/object
+# (e.g. S3-FUSE) mount, where SQLite can corrupt and dir-walks are slow.
+_CACHE_BASE = os.environ.get('GALLERY_CACHE_DIR', BASE_OUTPUT_PATH)
+THUMBNAIL_CACHE_DIR = os.path.join(_CACHE_BASE, THUMBNAIL_CACHE_FOLDER_NAME)
+SQLITE_CACHE_DIR = os.path.join(_CACHE_BASE, SQLITE_CACHE_FOLDER_NAME)
 DATABASE_FILE = os.path.join(SQLITE_CACHE_DIR, DATABASE_FILENAME)
 PROTECTED_FOLDER_KEYS = {path_to_key(f) for f in SPECIAL_FOLDERS}
 PROTECTED_FOLDER_KEYS.add('_root_')
@@ -128,6 +133,13 @@ PROTECTED_FOLDER_KEYS.add('_root_')
 app = Flask(__name__)
 gallery_view_cache = []
 folder_config_cache = None
+
+
+@app.route('/healthz')
+def healthz():
+    # Liveness/readiness: 200 as soon as the web server is up, independent of
+    # whether the (possibly slow, first-run) library scan has finished.
+    return 'ok', 200
 FFPROBE_EXECUTABLE_PATH = None
 
 

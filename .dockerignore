@@ -1,0 +1,18 @@
+# Keep the build context small — the repo carries a vendored venv and a big output/ cache.
+.git
+.gitignore
+venv/
+.venv/
+env/
+ENV/
+output/
+input/
+assets/
+*.pyc
+__pycache__/
+.DS_Store
+server.log
+.env
+.env.*
+# Generated in the image from config_example.py; don't ship local host paths.
+config.py

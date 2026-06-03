@@ -1,0 +1,81 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  REGISTRY: azacr1.azurecr.io
+  IMAGE_NAME: gallery
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - id: meta
+        run: echo "tag=$(git rev-parse --short=8 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - if: github.event_name != 'pull_request'
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - if: github.event_name != 'pull_request'
+        run: az acr login --name azacr1
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          build-args: |
+            BUILD_NUMBER=${{ steps.meta.outputs.tag }}
+          # ACR Standard SKU + buildx attestations don't mix — keep these false
+          provenance: false
+          sbom: false
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Bumps the build-sha annotation in platform-infra so Argo CD recreates the
+  # pod, which re-pulls the freshly-pushed :latest image. Gallery is prod-only
+  # (no dev variant), so there's a single channel/target.
+  bump-platform-infra:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: hikarukujo/platform-infra
+          token: ${{ secrets.PLATFORM_INFRA_PAT }}
+          path: platform-infra
+
+      - working-directory: platform-infra
+        env:
+          NEW_TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          FILE=apps/gallery/deployment.yaml
+          sed -i "s|build-sha: \".*\"|build-sha: \"${NEW_TAG}\"|" "$FILE"
+          git config user.name  "gallery-ci"
+          git config user.email "ci@roleplai.cx"
+          git add "$FILE"
+          if git diff --staged --quiet; then echo "No build-sha change"; exit 0; fi
+          git commit -m "gallery: rolled to build ${NEW_TAG}"
+          git push
