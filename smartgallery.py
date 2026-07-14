@@ -673,34 +673,39 @@ def gallery_redirect_base():
     return redirect(url_for('gallery_view', folder_key='_root_'))
 
 def refresh_mount_dir(relative_path=''):
-    """If the ComfyUI output is an rclone FUSE mount, invalidate rclone's cached
-    directory listing for `relative_path` (relative to BASE_OUTPUT_PATH) so a
-    subsequent os.listdir sees files added straight to the bucket, instead of
-    waiting for the mount's --dir-cache-time. No-op unless GALLERY_RCLONE_RC_URL
-    is set; fails soft so it never blocks a request."""
+    """Force rclone to re-read `relative_path` (relative to BASE_OUTPUT_PATH) from the
+    remote so files ComfyUI wrote straight to the bucket (outside the mount) become
+    visible to os.listdir. rclone caches listings for --dir-cache-time and a plain
+    vfs/refresh can miss entries created on the remote, so we vfs/forget the dir first,
+    then vfs/refresh recursive=true. No-op unless GALLERY_RCLONE_RC_URL is set; fails
+    soft so it never blocks the request."""
     if not RCLONE_RC_URL:
+        print("INFO: refresh requested but GALLERY_RCLONE_RC_URL is unset — skipping rclone refresh", flush=True)
         return
     rel = (relative_path or '').replace(os.sep, '/').strip('/')
-    try:
-        payload = json.dumps({'dir': rel}).encode()
-        req = urllib.request.Request(
-            f"{RCLONE_RC_URL}/vfs/refresh",
-            data=payload,
-            headers={'Content-Type': 'application/json'},
-            method='POST',
-        )
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            resp.read()
-    except Exception as e:
-        print(f"WARNING: rclone vfs/refresh for '{rel or '/'}' failed: {e}")
+    for cmd, extra in (('vfs/forget', {}), ('vfs/refresh', {'recursive': 'true'})):
+        params = dict(extra)
+        if rel:
+            params['dir'] = rel
+        try:
+            req = urllib.request.Request(
+                f"{RCLONE_RC_URL}/{cmd}",
+                data=json.dumps(params).encode(),
+                headers={'Content-Type': 'application/json'},
+                method='POST',
+            )
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                print(f"INFO: rclone {cmd} {params} -> {resp.read().decode('utf-8', 'replace').strip()}", flush=True)
+        except Exception as e:
+            print(f"WARNING: rclone {cmd} {params} failed: {e}", flush=True)
 
 @app.route('/galleryout/refresh_fs/<string:folder_key>', methods=['POST'])
 def refresh_fs(folder_key):
-    # Explicit Refresh button ONLY. Invalidates rclone's cached directory listing for
-    # this folder so files uploaded straight to the bucket show up on the reload that
-    # follows. Deliberately NOT wired to F5, pagination, sort, or filter — those stay
-    # cache-cheap and never force a WAN re-list.
-    refresh_mount_dir(key_to_path(folder_key) or '')
+    # Explicit Refresh button ONLY (never F5/paging/sort/filter). Forces rclone to
+    # re-read this folder from the bucket so newly written images appear on the reload.
+    rel = key_to_path(folder_key) or ''
+    print(f"INFO: Refresh button: folder_key={folder_key!r} rel={rel!r}", flush=True)
+    refresh_mount_dir(rel)
     return jsonify({'ok': True, 'folder': folder_key})
 
 @app.route('/galleryout/view/<string:folder_key>')
