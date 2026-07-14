@@ -20,6 +20,7 @@ import sys
 import subprocess
 import base64
 import ipaddress
+import urllib.request
 from flask import Flask, render_template, send_from_directory, abort, send_file, url_for, redirect, request, jsonify, Response
 from PIL import Image, ImageSequence
 import colorsys
@@ -35,7 +36,8 @@ from config import (
     PAGE_SIZE,
     SPECIAL_FOLDERS,
     ENABLE_DELETION,
-    DELETION_ALLOWED_IPS
+    DELETION_ALLOWED_IPS,
+    RCLONE_RC_URL
 )
 
 # --- CACHE AND FOLDER NAMES ---
@@ -669,6 +671,37 @@ def initialize_gallery():
 @app.route('/')
 def gallery_redirect_base():
     return redirect(url_for('gallery_view', folder_key='_root_'))
+
+def refresh_mount_dir(relative_path=''):
+    """If the ComfyUI output is an rclone FUSE mount, invalidate rclone's cached
+    directory listing for `relative_path` (relative to BASE_OUTPUT_PATH) so a
+    subsequent os.listdir sees files added straight to the bucket, instead of
+    waiting for the mount's --dir-cache-time. No-op unless GALLERY_RCLONE_RC_URL
+    is set; fails soft so it never blocks a request."""
+    if not RCLONE_RC_URL:
+        return
+    rel = (relative_path or '').replace(os.sep, '/').strip('/')
+    try:
+        payload = json.dumps({'dir': rel}).encode()
+        req = urllib.request.Request(
+            f"{RCLONE_RC_URL}/vfs/refresh",
+            data=payload,
+            headers={'Content-Type': 'application/json'},
+            method='POST',
+        )
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            resp.read()
+    except Exception as e:
+        print(f"WARNING: rclone vfs/refresh for '{rel or '/'}' failed: {e}")
+
+@app.route('/galleryout/refresh_fs/<string:folder_key>', methods=['POST'])
+def refresh_fs(folder_key):
+    # Explicit Refresh button ONLY. Invalidates rclone's cached directory listing for
+    # this folder so files uploaded straight to the bucket show up on the reload that
+    # follows. Deliberately NOT wired to F5, pagination, sort, or filter — those stay
+    # cache-cheap and never force a WAN re-list.
+    refresh_mount_dir(key_to_path(folder_key) or '')
+    return jsonify({'ok': True, 'folder': folder_key})
 
 @app.route('/galleryout/view/<string:folder_key>')
 def gallery_view(folder_key):

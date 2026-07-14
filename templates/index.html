@@ -330,7 +330,7 @@
                         {# --- REINSERIMENTO DEI BOTTONI MANCANTI --- #}
                         <button type="submit">🔍 Filter</button>
                         <a href="{{ url_for('gallery_view', folder_key=current_folder_key) }}">🔄 Reset</a>
-                        <button type="button" id="refresh-btn" class="refresh-btn">♻️ Refresh</button>
+                        <button type="button" id="refresh-btn" class="refresh-btn" data-folder-key="{{ current_folder_key }}">♻️ Refresh</button>
                     </div>
                 </div>
             </form>
@@ -949,7 +949,19 @@
             }
 
             document.getElementById('folder-tree-nav').addEventListener('click', handleMainTreeToggle);
-            document.getElementById('refresh-btn').addEventListener('click', () => window.location.reload());
+            document.getElementById('refresh-btn').addEventListener('click', async (e) => {
+                // Explicit refresh ONLY: ask the server to invalidate the object-storage
+                // (rclone) listing for THIS folder, then reload. F5, paging, sort and
+                // filter never do this — they just reload from the existing index.
+                const btn = e.currentTarget;
+                const key = btn.dataset.folderKey || '_root_';
+                const original = btn.textContent;
+                btn.disabled = true; btn.textContent = '♻️ Refreshing…';
+                try {
+                    await fetch(`/galleryout/refresh_fs/${encodeURIComponent(key)}`, { method: 'POST' });
+                } catch (_) { /* fail soft — still reload */ }
+                window.location.reload();
+            });
             
             const createFolderBtn = document.getElementById('create-folder-btn');
             if (createFolderBtn) {

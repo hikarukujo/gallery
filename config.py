@@ -68,3 +68,12 @@ ENABLE_DELETION = os.environ.get('GALLERY_ENABLE_DELETION', 'true').lower() == '
 # Only takes effect when ENABLE_DELETION is True
 _deletion_allowed_ips_env = os.environ.get('GALLERY_DELETION_ALLOWED_IPS', '192.168.1.100')
 DELETION_ALLOWED_IPS = [ip.strip() for ip in _deletion_allowed_ips_env.split(',') if ip.strip()]
+
+# --- rclone FUSE mount refresh (object-storage backends) ---
+# When the ComfyUI 'output' folder is an rclone mount (e.g. an S3/QuObjects bucket),
+# rclone serves a cached directory listing for its --dir-cache-time, so files uploaded
+# straight to the bucket don't appear until that expires. Set this to rclone's
+# remote-control API URL and the app's Refresh button will call vfs/refresh to force an
+# immediate re-list of the viewed folder. Leave empty to disable (local disk / no rclone).
+# Example: http://127.0.0.1:5572
+RCLONE_RC_URL = os.environ.get('GALLERY_RCLONE_RC_URL', '').rstrip('/')
