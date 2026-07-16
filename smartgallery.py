@@ -701,22 +701,38 @@ def refresh_mount_dir(relative_path=''):
 
 @app.route('/galleryout/refresh_fs/<string:folder_key>', methods=['POST'])
 def refresh_fs(folder_key):
-    # Explicit Refresh button ONLY (never F5/paging/sort/filter). Forces rclone to
-    # re-read this folder from the bucket so newly written images appear on the reload.
+    # Explicit Refresh button ONLY (never F5/paging/sort/filter). Does the expensive work
+    # here, once: re-read the folder from the bucket (rclone), rebuild the folder/prefix
+    # tree, and sync this folder into the SQLite index so the reload that follows shows the
+    # new files. Normal loads stay cheap (SQLite only) and never touch the WAN mount.
+    # Gate on the same IP allow-list as deletion/modification: forcing a WAN re-list is a
+    # privileged, expensive operation, so restrict it to the delete-allowed IP(s).
+    client_ip = get_client_ip()
+    allowed, reason = is_deletion_allowed(client_ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': f'Refresh not permitted: {reason}'}), 403
     rel = key_to_path(folder_key) or ''
     print(f"INFO: Refresh button: folder_key={folder_key!r} rel={rel!r}", flush=True)
     refresh_mount_dir(rel)
+    folders = get_dynamic_folder_config(force_refresh=True)
+    if folder_key in folders:
+        sync_folder_on_demand(folders[folder_key]['path'])
     return jsonify({'ok': True, 'folder': folder_key})
 
 @app.route('/galleryout/view/<string:folder_key>')
 def gallery_view(folder_key):
     global gallery_view_cache
-    folders = get_dynamic_folder_config(force_refresh=True)
+    # Normal loads (incl. F5, paging, sort, filter) serve from the cached folder tree +
+    # SQLite index ONLY — no WAN walk, no rclone re-list. Forcing a full os.walk + an
+    # on-demand sync on every request hammered the WAN mount and stacked up concurrent
+    # scans (thundering herd) while the cold initial listing was still in flight. New
+    # files are surfaced by the explicit Refresh button (refresh_fs), which does the
+    # mount refresh + folder sync once.
+    folders = get_dynamic_folder_config()
     if folder_key not in folders:
         return redirect(url_for('gallery_view', folder_key='_root_'))
     current_folder_info = folders[folder_key]
     folder_path = current_folder_info['path']
-    sync_folder_on_demand(folder_path)
     with get_db_connection() as conn:
         conditions, params = [], []
         conditions.append("path LIKE ?")

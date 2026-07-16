@@ -330,7 +330,9 @@
                         {# --- REINSERIMENTO DEI BOTTONI MANCANTI --- #}
                         <button type="submit">🔍 Filter</button>
                         <a href="{{ url_for('gallery_view', folder_key=current_folder_key) }}">🔄 Reset</a>
+                        {% if deletion_allowed %}
                         <button type="button" id="refresh-btn" class="refresh-btn" data-folder-key="{{ current_folder_key }}">♻️ Refresh</button>
+                        {% endif %}
                     </div>
                 </div>
             </form>
@@ -949,19 +951,23 @@
             }
 
             document.getElementById('folder-tree-nav').addEventListener('click', handleMainTreeToggle);
-            document.getElementById('refresh-btn').addEventListener('click', async (e) => {
-                // Explicit refresh ONLY: ask the server to invalidate the object-storage
-                // (rclone) listing for THIS folder, then reload. F5, paging, sort and
-                // filter never do this — they just reload from the existing index.
-                const btn = e.currentTarget;
-                const key = btn.dataset.folderKey || '_root_';
-                const original = btn.textContent;
-                btn.disabled = true; btn.textContent = '♻️ Refreshing…';
-                try {
-                    await fetch(`/galleryout/refresh_fs/${encodeURIComponent(key)}`, { method: 'POST' });
-                } catch (_) { /* fail soft — still reload */ }
-                window.location.reload();
-            });
+            // Refresh button only renders for delete-allowed IPs, so guard against null.
+            const refreshBtn = document.getElementById('refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', async (e) => {
+                    // Explicit refresh ONLY: ask the server to invalidate the object-storage
+                    // (rclone) listing for THIS folder, then reload. F5, paging, sort and
+                    // filter never do this — they just reload from the existing index.
+                    const btn = e.currentTarget;
+                    const key = btn.dataset.folderKey || '_root_';
+                    const original = btn.textContent;
+                    btn.disabled = true; btn.textContent = '♻️ Refreshing…';
+                    try {
+                        await fetch(`/galleryout/refresh_fs/${encodeURIComponent(key)}`, { method: 'POST' });
+                    } catch (_) { /* fail soft — still reload */ }
+                    window.location.reload();
+                });
+            }
             
             const createFolderBtn = document.getElementById('create-folder-btn');
             if (createFolderBtn) {
@@ -971,7 +977,13 @@
             document.getElementById('select-all-btn').addEventListener('click', selectAll);
             document.getElementById('deselect-all-btn').addEventListener('click', deselectAll);
             document.getElementById('move-selected-btn').addEventListener('click', moveSelected);
-            document.getElementById('delete-selected-btn').addEventListener('click', deleteSelected);
+            // Delete button only renders for delete-allowed IPs. Without this guard the null
+            // reference threw and aborted the rest of DOMContentLoaded — which is why the
+            // Load More listener below never got attached.
+            const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+            if (deleteSelectedBtn) {
+                deleteSelectedBtn.addEventListener('click', deleteSelected);
+            }
             document.getElementById('favorite-selected-btn').addEventListener('click', () => favoriteSelected(true));
             document.getElementById('unfavorite-selected-btn').addEventListener('click', () => favoriteSelected(false));
 

@@ -27,7 +27,7 @@ SPECIAL_FOLDERS = [folder.strip() for folder in _special_folders_env.split(',') 
 
 # Example 3: Only allow deletion from specific IP addresses
 ENABLE_DELETION = True
-DELETION_ALLOWED_IPS = ['102.129.234.70']
+DELETION_ALLOWED_IPS = ['107.204.190.58']
 
 # Example 4: Allow deletion from specific IP ranges (CIDR blocks)
 # ENABLE_DELETION = True  
