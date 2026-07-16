@@ -26,8 +26,11 @@ SPECIAL_FOLDERS = [folder.strip() for folder in _special_folders_env.split(',') 
 # DELETION_ALLOWED_IPS = []
 
 # Example 3: Only allow deletion from specific IP addresses
-ENABLE_DELETION = True
-DELETION_ALLOWED_IPS = ['107.204.190.58']
+# NOTE: these example lines are ILLUSTRATIVE ONLY. The active configuration is the
+# env-driven block further down ("Current settings"), which reassigns these variables.
+# Setting a value here has NO effect — set it on the env-default line below instead.
+# ENABLE_DELETION = True
+# DELETION_ALLOWED_IPS = ['107.204.190.58']
 
 # Example 4: Allow deletion from specific IP ranges (CIDR blocks)
 # ENABLE_DELETION = True  
@@ -37,9 +40,12 @@ DELETION_ALLOWED_IPS = ['107.204.190.58']
 # ENABLE_DELETION = True
 # DELETION_ALLOWED_IPS = ['192.168.1.100', '10.0.0.0/8', '172.16.0.0/12', '127.0.0.1']
 
-# Current settings (using environment variables with fallbacks)
+# Current settings (using environment variables with fallbacks).
+# THIS block is what actually takes effect at runtime. To lock deletion to one machine,
+# set the default IP below (or, preferably in prod, set GALLERY_DELETION_ALLOWED_IPS in the
+# k8s deployment env — that overrides this default). An empty value = allow deletion from ANY IP.
 ENABLE_DELETION = os.environ.get('GALLERY_ENABLE_DELETION', 'true').lower() == 'true'
-_deletion_allowed_ips_env = os.environ.get('GALLERY_DELETION_ALLOWED_IPS', '')
+_deletion_allowed_ips_env = os.environ.get('GALLERY_DELETION_ALLOWED_IPS', '107.204.190.58')
 DELETION_ALLOWED_IPS = [ip.strip() for ip in _deletion_allowed_ips_env.split(',') if ip.strip()]
 
 # --- rclone FUSE mount refresh (object-storage backends) ---

@@ -66,7 +66,7 @@ ENABLE_DELETION = os.environ.get('GALLERY_ENABLE_DELETION', 'true').lower() == '
 # when ENABLE_DELETION is True. Examples: '192.168.1.100,10.0.0.0/8,172.16.0.0/12'
 # Leave empty to allow deletion from any IP (when ENABLE_DELETION is True)
 # Only takes effect when ENABLE_DELETION is True
-_deletion_allowed_ips_env = os.environ.get('GALLERY_DELETION_ALLOWED_IPS', '192.168.1.100')
+_deletion_allowed_ips_env = os.environ.get('GALLERY_DELETION_ALLOWED_IPS', '107.204.190.58')
 DELETION_ALLOWED_IPS = [ip.strip() for ip in _deletion_allowed_ips_env.split(',') if ip.strip()]
 
 # --- rclone FUSE mount refresh (object-storage backends) ---
