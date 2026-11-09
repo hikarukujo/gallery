@@ -616,6 +616,17 @@ def sync_folder_on_demand(folder_path):
     except Exception as e:
         print(f"ERROR: An error occurred during on-demand sync of folder '{folder_path}': {e}")
 
+def filename_prefix(filename):
+    """Sidebar label for a ComfyUI output name.
+
+    SaveImage writes ``{title}_{counter:05d}_.ext``. The title itself may contain
+    underscores (``Young_Lorilan_00001_.png``), so the label is the stem with one
+    trailing counter removed, not the text before the first underscore.
+    """
+    stem = os.path.splitext(os.path.basename(filename))[0].rstrip('_')
+    stem = re.sub(r'_\d{3,}$', '', stem)
+    return stem.strip('_')
+
 def scan_folder_and_extract_options(folder_path):
     extensions, prefixes = set(), set()
     try:
@@ -624,7 +635,9 @@ def scan_folder_and_extract_options(folder_path):
             if os.path.isfile(os.path.join(folder_path, filename)):
                 ext = os.path.splitext(filename)[1]
                 if ext and ext.lower() not in ['.json', '.sqlite']: extensions.add(ext.lstrip('.').lower())
-                if '_' in filename: prefixes.add(filename.split('_')[0])
+                prefix = filename_prefix(filename)
+                if prefix and '_' in filename:
+                    prefixes.add(prefix)
     except Exception as e: print(f"ERROR: Could not scan folder '{folder_path}': {e}")
     return None, sorted(list(extensions)), sorted(list(prefixes))
 
@@ -635,11 +648,9 @@ def get_all_prefixes():
         with get_db_connection() as conn:
             files = conn.execute("SELECT name FROM files").fetchall()
             for row in files:
-                filename = row['name']
-                if '_' in filename:
-                    prefix = filename.split('_')[0]
-                    if prefix:  # Only add non-empty prefixes
-                        prefixes.add(prefix)
+                prefix = filename_prefix(row['name'])
+                if prefix and '_' in row['name']:
+                    prefixes.add(prefix)
     except Exception as e:
         print(f"ERROR: Could not get all prefixes: {e}")
     return sorted(list(prefixes))
