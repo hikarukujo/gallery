@@ -616,28 +616,30 @@ def sync_folder_on_demand(folder_path):
     except Exception as e:
         print(f"ERROR: An error occurred during on-demand sync of folder '{folder_path}': {e}")
 
-_COUNTER_RE = re.compile(r'_\d{3,}$')
+_STRUCTURAL_SEGMENT = re.compile(r'^(?:\d+|v\d+|k\d+|scene|copy|seed)$', re.IGNORECASE)
 
 def filename_prefix(filename):
-    """Sidebar label for a ComfyUI output name.
+    """Sidebar label for a generated filename.
 
-    SaveImage writes ``{title}_{counter:05d}_.ext``. The title itself may contain
-    underscores (``Young_Lorilan_00001_.png``), so the label is the stem with one
-    trailing counter removed, not the text before the first underscore. Names with
-    no trailing counter are not titles and return None.
+    Keep leading name words, including multi-word titles (``Young_Lorilan``).
+    Stop at the first batch segment: a number (ComfyUI counter, seed, scene
+    index), a version (``v12``, ``k3``), or the words ``scene``, ``copy``, and
+    ``seed``. ``Young_Lorilan_scene_01_copy_01_seed_123_00001_.png`` is
+    ``Young_Lorilan``. ``Nocturnal_Candid`` stays ``Nocturnal_Candid``.
     """
-    stem = os.path.splitext(os.path.basename(filename))[0].rstrip('_')
-    if not _COUNTER_RE.search(stem):
+    stem = os.path.splitext(os.path.basename(filename))[0].strip('_')
+    if not stem:
         return None
-    return _COUNTER_RE.sub('', stem).strip('_') or None
-
-def prefix_name_glob(prefix):
-    """Match ``{prefix}_{counter}...`` only. ``_`` is literal, unlike a LIKE pattern,
-    and the character after the title must be a digit so ``Young`` does not include
-    ``Young_Lorilan_00001_.png``.
-    """
-    escaped = ''.join('[' + c + ']' if c in '*?[' else c for c in prefix)
-    return escaped + '_[0-9][0-9][0-9]*'
+    kept = []
+    for segment in stem.split('_'):
+        if not segment:
+            continue
+        if _STRUCTURAL_SEGMENT.match(segment):
+            break
+        kept.append(segment)
+    if not kept:
+        return None
+    return '_'.join(kept)
 
 def scan_folder_and_extract_options(folder_path):
     extensions, prefixes = set(), set()
@@ -773,16 +775,7 @@ def gallery_view(folder_key):
         if request.args.get('favorites', 'false').lower() == 'true':
             conditions.append("is_favorite = 1")
 
-        selected_prefixes = request.args.getlist('prefix')
-        if selected_prefixes:
-            prefix_conditions = []
-            for prefix in selected_prefixes:
-                prefix_clean = prefix.strip()
-                if prefix_clean:
-                    prefix_conditions.append("name GLOB ?")
-                    params.append(prefix_name_glob(prefix_clean))
-            if prefix_conditions:
-                conditions.append(f"({' OR '.join(prefix_conditions)})")
+        selected_prefixes = [p.strip() for p in request.args.getlist('prefix') if p.strip()]
 
         selected_extensions = request.args.getlist('extension')
         if selected_extensions:
@@ -801,6 +794,9 @@ def gallery_view(folder_key):
         
     folder_path_norm = os.path.normpath(folder_path)
     all_files_filtered = [dict(row) for row in all_files_raw if os.path.normpath(os.path.dirname(row['path'])) == folder_path_norm]
+    if selected_prefixes:
+        wanted = set(selected_prefixes)
+        all_files_filtered = [row for row in all_files_filtered if filename_prefix(row['name']) in wanted]
     gallery_view_cache = all_files_filtered
     initial_files = gallery_view_cache[:PAGE_SIZE]
     _, extensions, prefixes = scan_folder_and_extract_options(folder_path)
