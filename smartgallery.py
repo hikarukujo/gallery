@@ -616,16 +616,28 @@ def sync_folder_on_demand(folder_path):
     except Exception as e:
         print(f"ERROR: An error occurred during on-demand sync of folder '{folder_path}': {e}")
 
+_COUNTER_RE = re.compile(r'_\d{3,}$')
+
 def filename_prefix(filename):
     """Sidebar label for a ComfyUI output name.
 
     SaveImage writes ``{title}_{counter:05d}_.ext``. The title itself may contain
     underscores (``Young_Lorilan_00001_.png``), so the label is the stem with one
-    trailing counter removed, not the text before the first underscore.
+    trailing counter removed, not the text before the first underscore. Names with
+    no trailing counter are not titles and return None.
     """
     stem = os.path.splitext(os.path.basename(filename))[0].rstrip('_')
-    stem = re.sub(r'_\d{3,}$', '', stem)
-    return stem.strip('_')
+    if not _COUNTER_RE.search(stem):
+        return None
+    return _COUNTER_RE.sub('', stem).strip('_') or None
+
+def prefix_name_glob(prefix):
+    """Match ``{prefix}_{counter}...`` only. ``_`` is literal, unlike a LIKE pattern,
+    and the character after the title must be a digit so ``Young`` does not include
+    ``Young_Lorilan_00001_.png``.
+    """
+    escaped = ''.join('[' + c + ']' if c in '*?[' else c for c in prefix)
+    return escaped + '_[0-9][0-9][0-9]*'
 
 def scan_folder_and_extract_options(folder_path):
     extensions, prefixes = set(), set()
@@ -636,7 +648,7 @@ def scan_folder_and_extract_options(folder_path):
                 ext = os.path.splitext(filename)[1]
                 if ext and ext.lower() not in ['.json', '.sqlite']: extensions.add(ext.lstrip('.').lower())
                 prefix = filename_prefix(filename)
-                if prefix and '_' in filename:
+                if prefix:
                     prefixes.add(prefix)
     except Exception as e: print(f"ERROR: Could not scan folder '{folder_path}': {e}")
     return None, sorted(list(extensions)), sorted(list(prefixes))
@@ -649,7 +661,7 @@ def get_all_prefixes():
             files = conn.execute("SELECT name FROM files").fetchall()
             for row in files:
                 prefix = filename_prefix(row['name'])
-                if prefix and '_' in row['name']:
+                if prefix:
                     prefixes.add(prefix)
     except Exception as e:
         print(f"ERROR: Could not get all prefixes: {e}")
@@ -767,8 +779,8 @@ def gallery_view(folder_key):
             for prefix in selected_prefixes:
                 prefix_clean = prefix.strip()
                 if prefix_clean:
-                    prefix_conditions.append("name LIKE ?")
-                    params.append(f"{prefix_clean}_%")
+                    prefix_conditions.append("name GLOB ?")
+                    params.append(prefix_name_glob(prefix_clean))
             if prefix_conditions:
                 conditions.append(f"({' OR '.join(prefix_conditions)})")
 
